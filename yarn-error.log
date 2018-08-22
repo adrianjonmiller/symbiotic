@@ -1,5 +1,5 @@
 Arguments: 
-  /Users/adrianmiller/.nvm/versions/node/v10.2.0/bin/node /usr/local/Cellar/yarn/1.5.1_1/libexec/bin/yarn.js run dev
+  /Users/adrianmiller/.nvm/versions/node/v10.2.0/bin/node /usr/local/Cellar/yarn/1.5.1_1/libexec/bin/yarn.js run build
 
 PATH: 
   /Users/adrianmiller/.rvm/gems/ruby-2.4.1/bin:/Users/adrianmiller/.rvm/gems/ruby-2.4.1@global/bin:/Users/adrianmiller/.rvm/rubies/ruby-2.4.1/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin:/Users/adrianmiller/.nvm/versions/node/v10.2.0/bin:/Users/adrianmiller/.rvm/gems/ruby-2.4.1/bin:/Users/adrianmiller/.rvm/gems/ruby-2.4.1@global/bin:/Users/adrianmiller/.rvm/rubies/ruby-2.4.1/bin:/Users/adrianmiller/.rvm/bin:/Users/adrianmiller/.rvm/bin
@@ -18,10 +18,11 @@ npm manifest:
     "name": "symbiote",
     "version": "1.0.0",
     "description": "Attaching functions to dom element",
-    "main": "index.js",
+    "main": "dist/main.js",
     "license": "MIT",
     "scripts": {
-      "dev": "webpack --progress --colors --watch --env dev"
+      "dev": "webpack --progress --colors --watch --mode development",
+      "build": "webpack --progress --colors --mode development"
     },
     "devDependencies": {
       "babel-loader": "^7.1.5",
@@ -2586,7 +2587,7 @@ Trace:
   Error: Command failed.
   Exit code: 1
   Command: sh
-  Arguments: -c webpack --progress --colors --watch --env dev
+  Arguments: -c webpack --progress --colors --mode development
   Directory: /Users/adrianmiller/Development/symbiote
   Output:
   

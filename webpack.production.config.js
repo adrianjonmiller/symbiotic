@@ -1,10 +1,10 @@
 const paths = require('./paths');
-const files = require('./files');
 const BrowserSyncPlugin = require('browser-sync-webpack-plugin');
 
+
 module.exports = {
+    mode: 'production',
     entry: paths.src,
-    devtool: 'source-map',
     output: {
         path: paths.dist,
     },

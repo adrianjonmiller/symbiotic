@@ -16,7 +16,6 @@ export default class Symbiote {
 
     attach (el) {    
         var context = this;
-
         this.$scope = type(el);
 
         function getChildren ($node) {
@@ -57,6 +56,6 @@ export default class Symbiote {
     }
 }
 
-if (window) {
+if (window && window.Symbiote === undefined) {
     window.Symbiote = Symbiote;
 }

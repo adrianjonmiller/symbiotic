@@ -2,10 +2,11 @@
   "name": "symbiote",
   "version": "1.0.0",
   "description": "Attaching functions to dom element",
-  "main": "index.js",
+  "main": "dist/main.js",
   "license": "MIT",
   "scripts": {
-    "dev": "webpack --progress --colors --watch --env dev"
+    "dev": "webpack --progress --colors --watch --mode development",
+    "build": "webpack --progress --colors --mode production"
   },
   "devDependencies": {
     "babel-loader": "^7.1.5",
