@@ -2,6 +2,6 @@ var main = document.getElementById('main');
 
 new Symbiote({
     'some-class-name': function () {
-        console.log(this)
+        this.innerHTML = 'This was added by Symbiote.js'
     }
 }).attach(main);

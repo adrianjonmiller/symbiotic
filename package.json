@@ -5,8 +5,8 @@
   "main": "dist/main.js",
   "license": "MIT",
   "scripts": {
-    "dev": "webpack --progress --colors --watch --mode development",
-    "build": "webpack --progress --colors --mode production"
+    "dev": "webpack --progress --colors --watch --mode development --config=webpack.development.config.js",
+    "build": "webpack --progress --colors --mode production --config=webpack.production.config.js"
   },
   "devDependencies": {
     "babel-loader": "^7.1.5",

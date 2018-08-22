@@ -23,9 +23,11 @@ module.exports = {
             {
                 host: 'localhost',
                 port: 3000,
-                server: { baseDir: ['docs', 'dist']}
-            },
-            {
+                server: {
+                    baseDir: ['docs', 'dist']
+                },
+                files: "docs/**/*"
+            },{
                 reload: false
             }
         )

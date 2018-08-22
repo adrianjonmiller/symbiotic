@@ -16,17 +16,5 @@ module.exports = {
                 exclude: /(node_modules|bower_components)/
             }
         ]
-    },
-    plugins: [
-        new BrowserSyncPlugin(
-            {
-                host: 'localhost',
-                port: 3000,
-                server: { baseDir: ['demo', 'dist']}
-            },
-            {
-                reload: false
-            }
-        )
-    ]
+    }
 }
