@@ -1,6 +1,6 @@
 export default {
     id: 0,
-    prefix: 'Layer_',
+    prefix: 'vnom-',
     camelCaseToDash: function (myStr) {
         return myStr.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
     },
@@ -26,9 +26,9 @@ export default {
             let context = this;
             let args = arguments;
 
-            if (frame !== null) cancelAnimationFrame(frame);
+            if (frame !== null) window.cancelAnimationFrame(frame);
 
-            frame = requestAnimationFrame(() => {
+            frame = window.requestAnimationFrame(() => {
                 func.apply(context, args);
             })
         }
