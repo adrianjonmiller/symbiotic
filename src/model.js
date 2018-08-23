@@ -49,7 +49,8 @@ export default class Model {
             append: this.append.bind(this),
             prepend: this.prepend.bind(this),
             find: this.find.bind(this),
-            findParent: this.findParent.bind(this)
+            findParent: this.findParent.bind(this),
+            _init: false
         };
 
         Object.defineProperty(this.model, 'id', {
@@ -198,7 +199,8 @@ export default class Model {
         return node;
     }
 
-    prepend($node) {        
+    prepend($node) {
+        
         let node = new Model($node);
         node.parent = this.model;
 
@@ -210,10 +212,7 @@ export default class Model {
         this.firstChild = node;
 
         this.$node.prepend(node.$node);
-
         this.emit('nodeAdded', node);
-
-        console.log(node)
 
         return node;
     }

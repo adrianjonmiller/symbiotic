@@ -114,14 +114,14 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 new _index2.default({
     'test': function test() {
-        var p1 = document.createElement('p');
-        p1.setAttribute('class', 'js-test');
-        p1.innerHTML = 'p1';
+        // var p1 = document.createElement('p');
+        // p1.setAttribute('class', 'js-test');
+        // p1.innerHTML = 'p1'
 
         var p2 = document.createElement('p');
         p2.setAttribute('class', 'js-test');
         p2.innerHTML = 'p2';
-        this.append(p1);
+        // this.append(p1);
         this.prepend(p2);
     },
     'js-test': function jsTest() {
@@ -201,7 +201,7 @@ var Symbiote = function () {
                 if (document.readyState !== 'loading') {
                     var vnom = cb();
                     vnom.on('nodeAdded', function (newNode) {
-                        console.log('node appeneded');
+
                         _this.init(newNode);
                     });
                     _this.init(vnom);
@@ -209,7 +209,6 @@ var Symbiote = function () {
                     document.addEventListener('DOMContentLoaded', function () {
                         var vnom = cb();
                         vnom.on('nodeAdded', function (newNode) {
-                            console.log('node appeneded');
                             _this.init(newNode);
                         });
                         _this.init(vnom);
@@ -222,31 +221,43 @@ var Symbiote = function () {
     }, {
         key: 'init',
         value: function init(vnom) {
-            var _this2 = this;
-
             vnom._head = this.head;
+            var attribute = '';
 
-            if (vnom[this.attribute]) {
-                vnom[this.attribute].split(' ').filter(function (method) {
-                    return Object.keys(_this2.methods).indexOf(method) > -1;
-                }).map(function (method, index, array) {
-                    if (!vnom.methods) {
-                        vnom.methods = {};
-                    }
-                    if (!vnom.methods[method]) {
-                        vnom.methods[method] = _this2.methods[method].bind(vnom);
+            for (var method in this.methods) {
+                switch (method.charAt(0)) {
+                    case '.':
+                        attribute = 'class';
+                        break;
+                    case '#':
+                        attribute = 'id';
+                        break;
+                    default:
+                        attribute = 'class';
+                }
 
-                        if (index === array.length - 1) {
-                            for (var _method in vnom.methods) {
-                                try {
-                                    vnom.methods[_method]();
-                                } catch (error) {
-                                    console.error(error.stack);
-                                }
-                            }
+                if (vnom[attribute]) {
+                    if (vnom[attribute].split(' ').indexOf(method) > -1) {
+                        if (!vnom.methods) {
+                            vnom.methods = {};
+                        }
+
+                        if (vnom.methods[method] === undefined) {
+                            vnom.methods[method] = this.methods[method].bind(vnom);
                         }
                     }
-                });
+                }
+            }
+
+            for (var _method in vnom.methods) {
+                try {
+                    if (vnom._init === false) {
+                        vnom.methods[_method]();
+                        vnom._init = true;
+                    }
+                } catch (error) {
+                    console.error(error.stack);
+                }
             }
 
             if (vnom.child) {
@@ -349,7 +360,8 @@ var Model = function () {
             append: this.append.bind(this),
             prepend: this.prepend.bind(this),
             find: this.find.bind(this),
-            findParent: this.findParent.bind(this)
+            findParent: this.findParent.bind(this),
+            _init: false
         };
 
         Object.defineProperty(this.model, 'id', {
@@ -506,6 +518,7 @@ var Model = function () {
     }, {
         key: 'prepend',
         value: function prepend($node) {
+
             var node = new Model($node);
             node.parent = this.model;
 
@@ -517,10 +530,7 @@ var Model = function () {
             this.firstChild = node;
 
             this.$node.prepend(node.$node);
-
             this.emit('nodeAdded', node);
-
-            console.log(node);
 
             return node;
         }

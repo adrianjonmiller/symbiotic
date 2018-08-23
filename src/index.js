@@ -35,7 +35,7 @@ export default class Symbiote {
             if (document.readyState !== 'loading') {
                 var vnom = cb();
                 vnom.on('nodeAdded', (newNode) => {
-                    console.log('node appeneded')
+                    
                     this.init(newNode);
                 });
                 this.init(vnom);
@@ -43,7 +43,6 @@ export default class Symbiote {
                 document.addEventListener('DOMContentLoaded', () => {
                     var vnom = cb()
                     vnom.on('nodeAdded', (newNode) => {
-                        console.log('node appeneded')
                         this.init(newNode);
                     });
                     this.init(vnom);
@@ -54,28 +53,42 @@ export default class Symbiote {
 
     init (vnom) {
         vnom._head = this.head;
+        let attribute = '';
 
-        if (vnom[this.attribute]) {
-            vnom[this.attribute].split(' ').filter((method) => {
-                return Object.keys(this.methods).indexOf(method) > -1;
-            }).map((method, index, array) => {
-                if (!vnom.methods) {
-                    vnom.methods = {};
-                }
-                if (!vnom.methods[method]) {
-                    vnom.methods[method] = this.methods[method].bind(vnom);
+        for (let method in this.methods) {
+            switch (method.charAt(0)) {
+                case '.':
+                    attribute = 'class';
+                    break;
+                case '#':
+                    attribute = 'id';
+                    break;
+                default:
+                    attribute = 'class'
+            }
 
-                    if (index === array.length - 1) {
-                        for (let method in vnom.methods) {
-                            try {
-                                (vnom.methods[method])()
-                            } catch (error) {
-                                console.error(error.stack);
-                            }
-                        }
+            if (vnom[attribute]) {
+                if (vnom[attribute].split(' ').indexOf(method) > -1) {
+                    if (!vnom.methods) {
+                        vnom.methods = {};
+                    }
+
+                    if (vnom.methods[method] === undefined) {
+                        vnom.methods[method] = this.methods[method].bind(vnom);
                     }
                 }
-            });
+            }
+        }
+
+        for (let method in vnom.methods) {
+            try {
+                if (vnom._init === false) {
+                    (vnom.methods[method])();
+                    vnom._init = true;
+                }
+            } catch (error) {
+                console.error(error.stack);
+            }
         }
 
         if (vnom.child) {
