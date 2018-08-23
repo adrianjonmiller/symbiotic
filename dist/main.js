@@ -96,7 +96,12 @@
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return Symbiote; });
-function getType(el) {
+/* harmony import */ var _model__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./model */ "./src/model.js");
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./utils */ "./src/utils.js");
+
+
+
+function getScope(el) {
     if (el === undefined) {
         return document.body || document.querySelector('body');
     }
@@ -109,55 +114,179 @@ function getType(el) {
     }
 }
 
-function getBehaviors($node, behaviors) {
-    var keys = Object.keys(behaviors);
-    var classes = $node.getAttribute('class');
-
-    if (classes) {
-        classes.split(' ').filter(function (behavior) {
-            return keys.indexOf(behavior) > -1;
-        }).map(behavior => {
-            try {
-                behaviors[behavior].bind($node)();
-            } catch (error) {
-                console.error(error.stack);
-            }
-        });
-    }
-}
-
-function getChildren($node, behaviors) {
-    for (let i = 0; i < $node.childNodes.length; i++) {
-        let $child = $node.childNodes[i];
-
-        if ($child.nodeType === 1) {
-            getBehaviors($child, behaviors);
-            getChildren($child, behaviors);
-        }
-    }
-}
-
 class Symbiote {
-    constructor(behaviors) {
-        this.behaviors = behaviors;
+    constructor(methods) {
+        this.methods = methods;
     }
 
-    attach(el) {
-        this.$scope = getType(el);
+    attach(el, attribute) {
+        const $scope = getScope(el);
+        this.attribute = attribute ? _utils__WEBPACK_IMPORTED_MODULE_1__["default"].dashToCamelCase(attribute) : 'class';
 
         (cb => {
             if (document.readyState !== 'loading') {
-                return cb(this.scope, this.behaviors);
+                this.init(cb());
             } else {
-                document.addEventListener('DOMContentLoaded', cb(this.$scope, this.behaviors));
+                document.addEventListener('DOMContentLoaded', () => {
+                    this.init(cb());
+                });
             }
-        })(getChildren);
+        })(() => new _model__WEBPACK_IMPORTED_MODULE_0__["default"]($scope));
+    }
+
+    init(vnom) {
+        if (vnom[this.attribute]) {
+            vnom[this.attribute].split(' ').filter(method => {
+                return Object.keys(this.methods).indexOf(method) > -1;
+            }).map((method, index, array) => {
+                if (!vnom.methods) {
+                    vnom.methods = {};
+                }
+
+                vnom.methods[method] = this.methods[method].bind(vnom);
+
+                if (index === array.length - 1) {
+                    for (let method in vnom.methods) {
+                        try {
+                            vnom.methods[method]();
+                        } catch (error) {
+                            console.error(error.stack);
+                        }
+                    }
+                }
+            });
+        }
+
+        if (vnom.child) {
+            this.init(vnom.child);
+        }
+
+        if (vnom.next) {
+            this.init(vnom.next);
+        }
     }
 }
 
 if (window && window.Symbiote === undefined) {
     window.Symbiote = Symbiote;
 }
+
+/***/ }),
+
+/***/ "./src/model.js":
+/*!**********************!*\
+  !*** ./src/model.js ***!
+  \**********************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return Model; });
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./utils */ "./src/utils.js");
+
+
+class Model {
+    constructor($node) {
+        const model = {
+            $node: $node
+        };
+
+        if ($node.attributes) {
+            for (let i = 0; i < $node.attributes.length; i++) {
+                let attrName = _utils__WEBPACK_IMPORTED_MODULE_0__["default"].dashToCamelCase($node.attributes[i].nodeName);
+                let $attrValue = $node.attributes[i].nodeValue;
+
+                this[attrName] = $attrValue;
+
+                Object.defineProperty(model, attrName, {
+                    get: () => {
+                        return this[attrName];
+                    },
+                    set: val => {
+                        if (this[attrName] !== val) {
+                            ;_utils__WEBPACK_IMPORTED_MODULE_0__["default"].debounce($node => {
+                                this[attrName] = val;
+                                $node.setAttribute(_utils__WEBPACK_IMPORTED_MODULE_0__["default"].camelCaseToDash(attrName), this[attrName]);
+                            })($node);
+                        }
+                        return this[attrName];
+                    }
+                });
+            }
+        }
+
+        if ($node.childNodes) {
+            var lastChild = null;
+
+            for (let i = 0; i < $node.childNodes.length; i++) {
+                let $child = $node.childNodes[i];
+                let child = new Model($child);
+                child.parent = model;
+
+                if ($child.nodeType === 1) {
+                    if (!lastChild) {
+                        model.child = child;
+                    } else {
+                        lastChild.next = child;
+                        child.prev = lastChild;
+                    }
+                    lastChild = child;
+                }
+            }
+        }
+
+        return model;
+    }
+}
+
+/***/ }),
+
+/***/ "./src/utils.js":
+/*!**********************!*\
+  !*** ./src/utils.js ***!
+  \**********************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ({
+    id: 0,
+    prefix: 'Layer_',
+    camelCaseToDash: function (myStr) {
+        return myStr.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+    },
+    dashToCamelCase: function (myString) {
+        return myString.replace(/-([a-z])/g, function (g) {
+            return g[1].toUpperCase();
+        });
+    },
+    createStyleNode: function () {
+        let styleNode = document.createElement('style');
+
+        styleNode.type = 'text/css';
+
+        return styleNode;
+    },
+    uid: function () {
+        return this.prefix + this.id++;
+    },
+    debounce: function (func) {
+        var frame = null;
+
+        return function executedFunction() {
+            let context = this;
+            let args = arguments;
+
+            if (frame !== null) cancelAnimationFrame(frame);
+
+            frame = requestAnimationFrame(() => {
+                func.apply(context, args);
+            });
+        };
+    }
+});
 
 /***/ })
 

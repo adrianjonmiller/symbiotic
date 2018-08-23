@@ -1,7 +1,14 @@
-var main = document.getElementById('main');
-
 new Symbiote({
     'some-class-name': function () {
-        this.innerHTML = 'This was added by Symbiote.js'
+        this.$node.innerHTML = 'This was added by Symbiote.Js'
+    },
+    'test': function () {
+        this.class = 'awesome'
+        this.$node.innerHTML = 'This was addeds'
+        console.log(this)
+    },
+    newTest: function () {
+        console.log(this);
+        this.$node.innerHTML = 'This was added by Symbiote.Js'
     }
-}).attach(main);
+}).attach('#main');

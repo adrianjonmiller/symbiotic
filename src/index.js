@@ -1,8 +1,11 @@
-function getType (el) {
+import Model from './model';
+import utils from './utils';
+
+function getScope (el) {
     if (el === undefined) {
         return document.body || document.querySelector('body');
     }
-    
+
     switch (typeof el) {
         case 'string':
             return document.querySelector(el);
@@ -11,51 +14,56 @@ function getType (el) {
     }
 }
 
-function getBehaviors($node, behaviors) {
-    var keys = Object.keys(behaviors);
-    var classes = $node.getAttribute('class');
-
-    if (classes) {
-        classes.split(' ').filter(function (behavior) {
-            return keys.indexOf(behavior) > -1
-        }).map((behavior) => {
-            try {
-                (behaviors[behavior].bind($node))();
-            } catch (error) {
-                console.error(error.stack);
-            }
-        })
-    }
-}
-
-function getChildren($node, behaviors) {
-    for (let i = 0; i < $node.childNodes.length; i++) {
-        let $child = $node.childNodes[i];
-
-        if ($child.nodeType === 1) {
-            getBehaviors($child, behaviors);
-            getChildren($child, behaviors);
-        }
-    }
-}
-
-
-
 export default class Symbiote {
-    constructor (behaviors) {
-        this.behaviors = behaviors;
+    constructor (methods) {
+        this.methods = methods;
     }
 
-    attach (el) {    
-        this.$scope = getType(el);
+    attach (el, attribute) {    
+        const $scope = getScope(el);
+        this.attribute = attribute ? utils.dashToCamelCase(attribute) : 'class';
 
         ((cb) => {
             if (document.readyState !== 'loading') {
-                return cb(this.scope, this.behaviors);
+                this.init(cb());
             } else {
-                document.addEventListener('DOMContentLoaded', cb(this.$scope, this.behaviors));
+                document.addEventListener('DOMContentLoaded', () => {
+                    this.init(cb());
+                });
             }
-        })(getChildren);
+        })(() => new Model($scope));
+    }
+
+    init (vnom) {
+        if (vnom[this.attribute]) {
+            vnom[this.attribute].split(' ').filter((method) => {
+                return Object.keys(this.methods).indexOf(method) > -1;
+            }).map((method, index, array) => {
+                if (!vnom.methods) {
+                    vnom.methods = {};
+                }
+
+                vnom.methods[method] = this.methods[method].bind(vnom);
+
+                if (index === array.length - 1) {
+                    for (let method in vnom.methods) {
+                        try {
+                            (vnom.methods[method])()
+                        } catch (error) {
+                            console.error(error.stack);
+                        }
+                    }
+                }
+            })
+        }
+
+        if (vnom.child) {
+            this.init(vnom.child)
+        }
+
+        if (vnom.next) {
+            this.init(vnom.next)
+        }
     }
 }
 

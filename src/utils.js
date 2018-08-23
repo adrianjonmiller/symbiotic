@@ -1,0 +1,36 @@
+export default {
+    id: 0,
+    prefix: 'Layer_',
+    camelCaseToDash: function (myStr) {
+        return myStr.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+    },
+    dashToCamelCase: function (myString) {
+        return myString.replace(/-([a-z])/g, function (g) {
+            return g[1].toUpperCase();
+        });
+    },
+    createStyleNode: function () {
+        let styleNode = document.createElement('style');
+
+        styleNode.type = 'text/css';
+
+        return styleNode;
+    },
+    uid: function () {
+        return this.prefix + this.id++;
+    },
+    debounce: function (func) {
+        var frame = null;
+
+        return function executedFunction() {
+            let context = this;
+            let args = arguments;
+
+            if (frame !== null) cancelAnimationFrame(frame);
+
+            frame = requestAnimationFrame(() => {
+                func.apply(context, args);
+            })
+        }
+    }
+};
