@@ -21,7 +21,7 @@ npm manifest:
     "main": "dist/main.js",
     "license": "MIT",
     "scripts": {
-      "docs": "webpack --progress --colors --watch --mode docs --config=webpack.docs.config.js",
+      "docs": "webpack --progress --colors --watch --mode development --config=webpack.docs.config.js",
       "dev": "webpack --progress --colors --watch --mode development --config=webpack.development.config.js",
       "build": "webpack --progress --colors --mode production --config=webpack.production.config.js"
     },
@@ -3038,7 +3038,7 @@ Trace:
   Error: Command failed.
   Exit code: 1
   Command: sh
-  Arguments: -c webpack --progress --colors --watch --mode docs --config=webpack.docs.config.js
+  Arguments: -c webpack --progress --colors --watch --mode development --config=webpack.docs.config.js
   Directory: /Users/adrianmiller/Development/symbiote
   Output:
   

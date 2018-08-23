@@ -19,11 +19,19 @@ export default class Symbiote {
         this.methods = methods;
     }
 
-    attach (el, attribute) {    
+    attach (el, attribute) {
         const $scope = getScope(el);
-        this.attribute = attribute ? utils.dashToCamelCase(attribute) : 'class';
 
-        ((cb) => {
+        this.attribute = attribute ? utils.dashToCamelCase(attribute) : 'class';
+        this.head = (function findHead ($node) {     
+            if ($node.tagName === 'HTML') {
+                return $node.querySelector('head')
+            } else {
+                return findHead($node.parentNode);
+            }
+        })($scope);
+
+        ;((cb) => {
             if (document.readyState !== 'loading') {
                 this.init(cb());
             } else {
@@ -35,6 +43,8 @@ export default class Symbiote {
     }
 
     init (vnom) {
+        vnom._head = this.head;
+
         if (vnom[this.attribute]) {
             vnom[this.attribute].split(' ').filter((method) => {
                 return Object.keys(this.methods).indexOf(method) > -1;
@@ -54,7 +64,7 @@ export default class Symbiote {
                         }
                     }
                 }
-            })
+            });
         }
 
         if (vnom.child) {
@@ -65,4 +75,8 @@ export default class Symbiote {
             this.init(vnom.next)
         }
     }
+}
+
+if (window && window.Symbiote === undefined) {
+    window.Symbiote = Symbiote;
 }

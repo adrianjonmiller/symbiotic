@@ -1,8 +1,7 @@
 import utils from './utils';
 
-const head = document.head || document.querySelector('head');
-
-function updateStyles (style, $styleNode, id) {
+function updateStyles (style, $styleNode, id, head) {
+    console.log(head);
     (utils.debounce(() => {
         if (Object.keys(style).length === 0) {
             $styleNode.innerHTML = ''
@@ -29,9 +28,7 @@ export default class Model {
     constructor ($node) {
         this.$styleNode = utils.createStyleNode();
         this.events = {};
-        this.style = {
-            color: 'blue'
-        };
+        this.style = {};
         this.firstChild = null;
         this.lastChild = null;
         this.next = null;
@@ -39,6 +36,7 @@ export default class Model {
         this.$node = $node;
         this.tagName = $node.tagName;
         this.id = $node.getAttribute('id') || utils.uid();
+        this.head = null;
 
         if (this.id !== $node.getAttribute('id')) {
             $node.setAttribute('id', this.id);
@@ -57,11 +55,20 @@ export default class Model {
             get: () => {
                 return this.id;
             }
-        })
+        });
 
         Object.defineProperty(this.model, 'tagName', {
             get: () => {
                 return this.tagName;
+            }
+        });
+
+        Object.defineProperty(this.model, '_head', {
+            get: () => {
+                return this.head;
+            },
+            set: (val) => {
+                this.head = val
             }
         })
 
@@ -73,7 +80,7 @@ export default class Model {
                 this.prev = val;
                 return this.prev;
             }
-        })
+        });
 
         Object.defineProperty(this.model, 'next', {
             get: () => {
@@ -83,7 +90,7 @@ export default class Model {
                 this.next = val;
                 return this.next;
             }
-        })
+        });
 
         Object.defineProperty(this.model, 'child', {
             get: () => {
@@ -93,7 +100,7 @@ export default class Model {
                 this.firstChild = val;
                 return this.firstChild;
             }
-        })
+        });
 
         Object.defineProperty(this.model, 'parent', {
             get: () => {
@@ -103,16 +110,16 @@ export default class Model {
                 this.parent = val
                 return this.parent;
             }
-        })
+        });
 
         Object.defineProperty(this.model, 'style', {
             get: () => {
-                updateStyles(this.style, this.$styleNode, this.id);
+                updateStyles(this.style, this.$styleNode, this.id, this.head);
                 return this.style;
             },
             set: (val) => {
                 Object.assign(this.style, val);
-                updateStyles(this.style, this.$styleNode, this.id);
+                updateStyles(this.style, this.$styleNode, this.id, this.head);
                 return this.style;
             }
         });

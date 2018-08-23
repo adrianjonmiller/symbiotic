@@ -96,207 +96,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /************************************************************************/
 /******/ ({
 
-/***/ "./dist/main.js":
-/*!**********************!*\
-  !*** ./dist/main.js ***!
-  \**********************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-/* WEBPACK VAR INJECTION */(function(module) {var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-!function (e, t) {
-  if ("object" == ( false ? undefined : _typeof(exports)) && "object" == ( false ? undefined : _typeof(module))) module.exports = t();else if (true) !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_FACTORY__ = (t),
-				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
-				(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
-				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));else { var i, n; }
-}(window, function () {
-  return function (e) {
-    var t = {};function n(i) {
-      if (t[i]) return t[i].exports;var r = t[i] = { i: i, l: !1, exports: {} };return e[i].call(r.exports, r, r.exports, n), r.l = !0, r.exports;
-    }return n.m = e, n.c = t, n.d = function (e, t, i) {
-      n.o(e, t) || Object.defineProperty(e, t, { enumerable: !0, get: i });
-    }, n.r = function (e) {
-      "undefined" != typeof Symbol && Symbol.toStringTag && Object.defineProperty(e, Symbol.toStringTag, { value: "Module" }), Object.defineProperty(e, "__esModule", { value: !0 });
-    }, n.t = function (e, t) {
-      if (1 & t && (e = n(e)), 8 & t) return e;if (4 & t && "object" == (typeof e === "undefined" ? "undefined" : _typeof(e)) && e && e.__esModule) return e;var i = Object.create(null);if (n.r(i), Object.defineProperty(i, "default", { enumerable: !0, value: e }), 2 & t && "string" != typeof e) for (var r in e) {
-        n.d(i, r, function (t) {
-          return e[t];
-        }.bind(null, r));
-      }return i;
-    }, n.n = function (e) {
-      var t = e && e.__esModule ? function () {
-        return e.default;
-      } : function () {
-        return e;
-      };return n.d(t, "a", t), t;
-    }, n.o = function (e, t) {
-      return Object.prototype.hasOwnProperty.call(e, t);
-    }, n.p = "", n(n.s = 1);
-  }([function (e, t, n) {
-    "use strict";
-    Object.defineProperty(t, "__esModule", { value: !0 }), t.default = { id: 0, prefix: "vnom-", camelCaseToDash: function camelCaseToDash(e) {
-        return e.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
-      }, dashToCamelCase: function dashToCamelCase(e) {
-        return e.replace(/-([a-z])/g, function (e) {
-          return e[1].toUpperCase();
-        });
-      }, createStyleNode: function createStyleNode() {
-        var e = document.createElement("style");return e.type = "text/css", e;
-      }, uid: function uid() {
-        return this.prefix + this.id++;
-      }, debounce: function debounce(e) {
-        var t = null;return function () {
-          var n = this,
-              i = arguments;null !== t && window.cancelAnimationFrame(t), t = window.requestAnimationFrame(function () {
-            e.apply(n, i);
-          });
-        };
-      } }, e.exports = t.default;
-  }, function (e, t, n) {
-    "use strict";
-    Object.defineProperty(t, "__esModule", { value: !0 });var i = function () {
-      function e(e, t) {
-        for (var n = 0; n < t.length; n++) {
-          var i = t[n];i.enumerable = i.enumerable || !1, i.configurable = !0, "value" in i && (i.writable = !0), Object.defineProperty(e, i.key, i);
-        }
-      }return function (t, n, i) {
-        return n && e(t.prototype, n), i && e(t, i), t;
-      };
-    }(),
-        r = "function" == typeof Symbol && "symbol" == _typeof(Symbol.iterator) ? function (e) {
-      return typeof e === "undefined" ? "undefined" : _typeof(e);
-    } : function (e) {
-      return e && "function" == typeof Symbol && e.constructor === Symbol && e !== Symbol.prototype ? "symbol" : typeof e === "undefined" ? "undefined" : _typeof(e);
-    },
-        o = s(n(2)),
-        u = s(n(0));function s(e) {
-      return e && e.__esModule ? e : { default: e };
-    }var a = function () {
-      function e(t) {
-        !function (e, t) {
-          if (!(e instanceof t)) throw new TypeError("Cannot call a class as a function");
-        }(this, e), this.methods = t;
-      }return i(e, [{ key: "attach", value: function value(e, t) {
-          var n = this,
-              i = function (e) {
-            if (void 0 === e) return document.body || document.querySelector("body");switch (void 0 === e ? "undefined" : r(e)) {case "string":
-                return document.querySelector(e);case "object":
-                return e;}
-          }(e);this.attribute = t ? u.default.dashToCamelCase(t) : "class", function (e) {
-            "loading" !== document.readyState ? n.init(e()) : document.addEventListener("DOMContentLoaded", function () {
-              n.init(e());
-            });
-          }(function () {
-            return new o.default(i);
-          });
-        } }, { key: "init", value: function value(e) {
-          var t = this;e[this.attribute] && e[this.attribute].split(" ").filter(function (e) {
-            return Object.keys(t.methods).indexOf(e) > -1;
-          }).map(function (n, i, r) {
-            if (e.methods || (e.methods = {}), e.methods[n] = t.methods[n].bind(e), i === r.length - 1) for (var o in e.methods) {
-              try {
-                e.methods[o]();
-              } catch (e) {
-                console.error(e.stack);
-              }
-            }
-          }), e.child && this.init(e.child), e.next && this.init(e.next);
-        } }]), e;
-    }();t.default = a, e.exports = t.default;
-  }, function (e, t, n) {
-    "use strict";
-    Object.defineProperty(t, "__esModule", { value: !0 });var i = function () {
-      function e(e, t) {
-        for (var n = 0; n < t.length; n++) {
-          var i = t[n];i.enumerable = i.enumerable || !1, i.configurable = !0, "value" in i && (i.writable = !0), Object.defineProperty(e, i.key, i);
-        }
-      }return function (t, n, i) {
-        return n && e(t.prototype, n), i && e(t, i), t;
-      };
-    }(),
-        r = function (e) {
-      return e && e.__esModule ? e : { default: e };
-    }(n(0));var o = document.head || document.querySelector("head");function u(e, t, n) {
-      r.default.debounce(function () {
-        if (0 !== Object.keys(e).length) {
-          var i = "#" + n + "{";for (var u in e) {
-            i += r.default.camelCaseToDash(u) + ":" + e[u] + ";";
-          }i += "}", null === t.parentNode && o.appendChild(t), t.innerHTML = i;
-        } else t.innerHTML = "";
-      })();
-    }var s = function () {
-      function e(t) {
-        var n = this;if (function (e, t) {
-          if (!(e instanceof t)) throw new TypeError("Cannot call a class as a function");
-        }(this, e), this.$styleNode = r.default.createStyleNode(), this.events = {}, this.style = { color: "blue" }, this.firstChild = null, this.lastChild = null, this.next = null, this.prev = null, this.$node = t, this.tagName = t.tagName, this.id = t.getAttribute("id") || r.default.uid(), this.id !== t.getAttribute("id") && t.setAttribute("id", this.id), this.model = { $node: t, on: this.on.bind(this), emit: this.emit.bind(this), append: this.append.bind(this), find: this.find.bind(this), findParent: this.findParent.bind(this) }, Object.defineProperty(this.model, "id", { get: function get() {
-            return n.id;
-          } }), Object.defineProperty(this.model, "tagName", { get: function get() {
-            return n.tagName;
-          } }), Object.defineProperty(this.model, "prev", { get: function get() {
-            return n.prev;
-          }, set: function set(e) {
-            return n.prev = e, n.prev;
-          } }), Object.defineProperty(this.model, "next", { get: function get() {
-            return n.next;
-          }, set: function set(e) {
-            return n.next = e, n.next;
-          } }), Object.defineProperty(this.model, "child", { get: function get() {
-            return n.firstChild;
-          }, set: function set(e) {
-            return n.firstChild = e, n.firstChild;
-          } }), Object.defineProperty(this.model, "parent", { get: function get() {
-            return n.parent;
-          }, set: function set(e) {
-            return n.parent = e, n.parent;
-          } }), Object.defineProperty(this.model, "style", { get: function get() {
-            return u(n.style, n.$styleNode, n.id), n.style;
-          }, set: function set(e) {
-            return Object.assign(n.style, e), u(n.style, n.$styleNode, n.id), n.style;
-          } }), t.attributes) for (var i = function i(e) {
-          var i = r.default.dashToCamelCase(t.attributes[e].nodeName),
-              o = t.attributes[e].nodeValue;n[i] || (n[i] = o, Object.defineProperty(n.model, i, { get: function get() {
-              return n[i];
-            }, set: function set(e) {
-              return n[i] !== e && (n[i] = e, r.default.debounce(function (e) {
-                e.setAttribute(r.default.camelCaseToDash(i), n[i]);
-              })(t)), n[i];
-            } }));
-        }, o = 0; o < t.attributes.length; o++) {
-          i(o);
-        }if (t.childNodes) for (o = 0; o < t.childNodes.length; o++) {
-          var s = t.childNodes[o];if (1 === s.nodeType) {
-            var a = new e(s);a.parent = this.model, this.lastChild ? (this.lastChild.next = a, a.prev = this.lastChild) : (this.firstChild = a, this.model.child = a), this.lastChild = a;
-          }
-        }return this.model;
-      }return i(e, [{ key: "append", value: function value(t, n) {
-          n = n || this.lastChild;var i = new e(t);i.parent = this.model, n && (i.prev = n, n = i), this.firstChild || (this.firstChild = i), this.lastChild = i, this.$node.appendChild(i.$node);
-        } }, { key: "emit", value: function value(e, t) {
-          var n = !0;if (t = t || this.model, void 0 === this.events && (this.events = {}), this.events[e]) for (var i = 0; i < this.events[e].length; i++) {
-            var r = this.events[e][i];r.fn(t), n = r.bubbles ? n : r.bubbles;
-          }n && this.parent && this.parent.emit(e, t);
-        } }, { key: "find", value: function value(e, t, n) {
-          var i = [];return e = r.default.dashToCamelCase(e), function r(o) {
-            o && (void 0 !== o[e] && o[e].indexOf(t) > -1 && ("function" == typeof n && n(o), i.push(o)), o.child && r(o.child), o.next && r(o.next));
-          }(this.firstChild), i;
-        } }, { key: "findParent", value: function value(e, t, n) {
-          var i = [];return e = r.default.dashToCamelCase(e), function r(o) {
-            o && (void 0 !== o[e] && o[e].indexOf(t) > -1 && ("function" == typeof n && n(o), i.push(o)), o.parent && r(o.parent));
-          }(this.firstChild), i;
-        } }, { key: "on", value: function value(e, t) {
-          var n = (e = e.split("."))[0],
-              i = "prevent" !== e[1];void 0 === this.events && (this.events = {}), void 0 === this.events[n] && (this.events[n] = []), this.events[n].push({ fn: t, bubbles: i });
-        } }]), e;
-    }();t.default = s, e.exports = t.default;
-  }]);
-});
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../node_modules/webpack/buildin/module.js */ "./node_modules/webpack/buildin/module.js")(module)))
-
-/***/ }),
-
 /***/ "./docs/app.js":
 /*!*********************!*\
   !*** ./docs/app.js ***!
@@ -307,52 +106,529 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 "use strict";
 
 
-var _main = __webpack_require__(/*! ../dist/main.js */ "./dist/main.js");
+var _index = __webpack_require__(/*! ../src/index.js */ "./src/index.js");
 
-var _main2 = _interopRequireDefault(_main);
+var _index2 = _interopRequireDefault(_index);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-console.log(_main2.default);
-
-new _main2.default({
+new _index2.default({
     'test': function test() {
-        console.log(this);
+        this.style.color = 'blue';
     }
 }).attach();
 
 /***/ }),
 
-/***/ "./node_modules/webpack/buildin/module.js":
-/*!***********************************!*\
-  !*** (webpack)/buildin/module.js ***!
-  \***********************************/
+/***/ "./src/index.js":
+/*!**********************!*\
+  !*** ./src/index.js ***!
+  \**********************/
 /*! no static exports found */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-module.exports = function(module) {
-	if (!module.webpackPolyfill) {
-		module.deprecate = function() {};
-		module.paths = [];
-		// module.parent = undefined by default
-		if (!module.children) module.children = [];
-		Object.defineProperty(module, "loaded", {
-			enumerable: true,
-			get: function() {
-				return module.l;
-			}
-		});
-		Object.defineProperty(module, "id", {
-			enumerable: true,
-			get: function() {
-				return module.i;
-			}
-		});
-		module.webpackPolyfill = 1;
-	}
-	return module;
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var _model = __webpack_require__(/*! ./model */ "./src/model.js");
+
+var _model2 = _interopRequireDefault(_model);
+
+var _utils = __webpack_require__(/*! ./utils */ "./src/utils.js");
+
+var _utils2 = _interopRequireDefault(_utils);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function getScope(el) {
+    if (el === undefined) {
+        return document.body || document.querySelector('body');
+    }
+
+    switch (typeof el === 'undefined' ? 'undefined' : _typeof(el)) {
+        case 'string':
+            return document.querySelector(el);
+        case 'object':
+            return el;
+    }
+}
+
+var Symbiote = function () {
+    function Symbiote(methods) {
+        _classCallCheck(this, Symbiote);
+
+        this.methods = methods;
+    }
+
+    _createClass(Symbiote, [{
+        key: 'attach',
+        value: function attach(el, attribute) {
+            var _this = this;
+
+            var $scope = getScope(el);
+
+            this.attribute = attribute ? _utils2.default.dashToCamelCase(attribute) : 'class';
+            this.head = function findHead($node) {
+                if ($node.tagName === 'HTML') {
+                    return $node.querySelector('head');
+                } else {
+                    return findHead($node.parentNode);
+                }
+            }($scope);
+
+            ;(function (cb) {
+                if (document.readyState !== 'loading') {
+                    _this.init(cb());
+                } else {
+                    document.addEventListener('DOMContentLoaded', function () {
+                        _this.init(cb());
+                    });
+                }
+            })(function () {
+                return new _model2.default($scope);
+            });
+        }
+    }, {
+        key: 'init',
+        value: function init(vnom) {
+            var _this2 = this;
+
+            vnom._head = this.head;
+
+            if (vnom[this.attribute]) {
+                vnom[this.attribute].split(' ').filter(function (method) {
+                    return Object.keys(_this2.methods).indexOf(method) > -1;
+                }).map(function (method, index, array) {
+                    if (!vnom.methods) {
+                        vnom.methods = {};
+                    }
+
+                    vnom.methods[method] = _this2.methods[method].bind(vnom);
+
+                    if (index === array.length - 1) {
+                        for (var _method in vnom.methods) {
+                            try {
+                                vnom.methods[_method]();
+                            } catch (error) {
+                                console.error(error.stack);
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (vnom.child) {
+                this.init(vnom.child);
+            }
+
+            if (vnom.next) {
+                this.init(vnom.next);
+            }
+        }
+    }]);
+
+    return Symbiote;
+}();
+
+exports.default = Symbiote;
+
+
+if (window && window.Symbiote === undefined) {
+    window.Symbiote = Symbiote;
+}
+module.exports = exports['default'];
+
+/***/ }),
+
+/***/ "./src/model.js":
+/*!**********************!*\
+  !*** ./src/model.js ***!
+  \**********************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _utils = __webpack_require__(/*! ./utils */ "./src/utils.js");
+
+var _utils2 = _interopRequireDefault(_utils);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function updateStyles(style, $styleNode, id, head) {
+    console.log(head);
+    _utils2.default.debounce(function () {
+        if (Object.keys(style).length === 0) {
+            $styleNode.innerHTML = '';
+            return;
+        }
+
+        var styleString = '#' + id + '{';
+
+        for (var prop in style) {
+            styleString += _utils2.default.camelCaseToDash(prop) + ':' + style[prop] + ';';
+        }
+
+        styleString += '}';
+
+        if ($styleNode.parentNode === null) {
+            head.appendChild($styleNode);
+        }
+
+        $styleNode.innerHTML = styleString;
+    })();
+}
+
+var Model = function () {
+    function Model($node) {
+        var _this = this;
+
+        _classCallCheck(this, Model);
+
+        this.$styleNode = _utils2.default.createStyleNode();
+        this.events = {};
+        this.style = {};
+        this.firstChild = null;
+        this.lastChild = null;
+        this.next = null;
+        this.prev = null;
+        this.$node = $node;
+        this.tagName = $node.tagName;
+        this.id = $node.getAttribute('id') || _utils2.default.uid();
+        this.head = null;
+
+        if (this.id !== $node.getAttribute('id')) {
+            $node.setAttribute('id', this.id);
+        }
+
+        this.model = {
+            $node: $node,
+            on: this.on.bind(this),
+            emit: this.emit.bind(this),
+            append: this.append.bind(this),
+            find: this.find.bind(this),
+            findParent: this.findParent.bind(this)
+        };
+
+        Object.defineProperty(this.model, 'id', {
+            get: function get() {
+                return _this.id;
+            }
+        });
+
+        Object.defineProperty(this.model, 'tagName', {
+            get: function get() {
+                return _this.tagName;
+            }
+        });
+
+        Object.defineProperty(this.model, '_head', {
+            get: function get() {
+                return _this.head;
+            },
+            set: function set(val) {
+                _this.head = val;
+            }
+        });
+
+        Object.defineProperty(this.model, 'prev', {
+            get: function get() {
+                return _this.prev;
+            },
+            set: function set(val) {
+                _this.prev = val;
+                return _this.prev;
+            }
+        });
+
+        Object.defineProperty(this.model, 'next', {
+            get: function get() {
+                return _this.next;
+            },
+            set: function set(val) {
+                _this.next = val;
+                return _this.next;
+            }
+        });
+
+        Object.defineProperty(this.model, 'child', {
+            get: function get() {
+                return _this.firstChild;
+            },
+            set: function set(val) {
+                _this.firstChild = val;
+                return _this.firstChild;
+            }
+        });
+
+        Object.defineProperty(this.model, 'parent', {
+            get: function get() {
+                return _this.parent;
+            },
+            set: function set(val) {
+                _this.parent = val;
+                return _this.parent;
+            }
+        });
+
+        Object.defineProperty(this.model, 'style', {
+            get: function get() {
+                updateStyles(_this.style, _this.$styleNode, _this.id, _this.head);
+                return _this.style;
+            },
+            set: function set(val) {
+                Object.assign(_this.style, val);
+                updateStyles(_this.style, _this.$styleNode, _this.id, _this.head);
+                return _this.style;
+            }
+        });
+
+        if ($node.attributes) {
+            var _loop = function _loop(i) {
+                var attrName = _utils2.default.dashToCamelCase($node.attributes[i].nodeName);
+                var $attrValue = $node.attributes[i].nodeValue;
+
+                if (!_this[attrName]) {
+                    _this[attrName] = $attrValue;
+
+                    Object.defineProperty(_this.model, attrName, {
+                        get: function get() {
+                            return _this[attrName];
+                        },
+                        set: function set(val) {
+                            if (_this[attrName] !== val) {
+                                _this[attrName] = val;
+
+                                ;_utils2.default.debounce(function ($node) {
+                                    $node.setAttribute(_utils2.default.camelCaseToDash(attrName), _this[attrName]);
+                                })($node);
+                            }
+                            return _this[attrName];
+                        }
+                    });
+                }
+            };
+
+            for (var i = 0; i < $node.attributes.length; i++) {
+                _loop(i);
+            }
+        }
+
+        if ($node.childNodes) {
+            for (var i = 0; i < $node.childNodes.length; i++) {
+                var $child = $node.childNodes[i];
+
+                if ($child.nodeType === 1) {
+                    var child = new Model($child);
+                    child.parent = this.model;
+
+                    if (!this.lastChild) {
+                        this.firstChild = child;
+                        this.model.child = child;
+                    } else {
+                        this.lastChild.next = child;
+                        child.prev = this.lastChild;
+                    }
+                    this.lastChild = child;
+                }
+            }
+        }
+
+        return this.model;
+    }
+
+    _createClass(Model, [{
+        key: 'append',
+        value: function append($node, after) {
+            after = after || this.lastChild;
+
+            var node = new Model($node);
+            node.parent = this.model;
+
+            if (after) {
+                node.prev = after;
+                after = node;
+            }
+
+            if (!this.firstChild) {
+                this.firstChild = node;
+            }
+
+            this.lastChild = node;
+            this.$node.appendChild(node.$node);
+        }
+    }, {
+        key: 'emit',
+        value: function emit(event, payload) {
+            var bubbles = true;
+            payload = payload || this.model;
+
+            if (this.events === undefined) {
+                this.events = {};
+            }
+
+            if (this.events[event]) {
+                for (var i = 0; i < this.events[event].length; i++) {
+                    var e = this.events[event][i];
+
+                    e.fn(payload);
+                    bubbles = !e.bubbles ? e.bubbles : bubbles;
+                }
+            }
+
+            if (bubbles && this.parent) {
+                this.parent.emit(event, payload);
+            }
+        }
+    }, {
+        key: 'find',
+        value: function find(attrName, value, cb) {
+            var result = [];
+
+            attrName = _utils2.default.dashToCamelCase(attrName);
+
+            (function dig(vnode) {
+                if (vnode) {
+                    if (vnode[attrName] !== undefined && vnode[attrName].indexOf(value) > -1) {
+                        if (typeof cb === 'function') {
+                            cb(vnode);
+                        }
+
+                        result.push(vnode);
+                    }
+
+                    if (vnode.child) {
+                        dig(vnode.child);
+                    }
+
+                    if (vnode.next) {
+                        dig(vnode.next);
+                    }
+                }
+            })(this.firstChild);
+
+            return result;
+        }
+    }, {
+        key: 'findParent',
+        value: function findParent(attrName, value, cb) {
+            var result = [];
+            attrName = _utils2.default.dashToCamelCase(attrName);
+
+            (function dig(vnode) {
+                if (vnode) {
+                    if (vnode[attrName] !== undefined && vnode[attrName].indexOf(value) > -1) {
+                        if (typeof cb === 'function') {
+                            cb(vnode);
+                        }
+
+                        result.push(vnode);
+                    }
+
+                    if (vnode.parent) {
+                        dig(vnode.parent);
+                    }
+                }
+            })(this.firstChild);
+
+            return result;
+        }
+    }, {
+        key: 'on',
+        value: function on(event, fn) {
+            event = event.split('.');
+            var name = event[0];
+            var bubbles = event[1] !== 'prevent';
+
+            if (this.events === undefined) {
+                this.events = {};
+            }
+
+            if (this.events[name] === undefined) {
+                this.events[name] = [];
+            }
+
+            this.events[name].push({ fn: fn, bubbles: bubbles });
+        }
+    }]);
+
+    return Model;
+}();
+
+exports.default = Model;
+module.exports = exports['default'];
+
+/***/ }),
+
+/***/ "./src/utils.js":
+/*!**********************!*\
+  !*** ./src/utils.js ***!
+  \**********************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.default = {
+    id: 0,
+    prefix: 'vnom-',
+    camelCaseToDash: function camelCaseToDash(myStr) {
+        return myStr.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+    },
+    dashToCamelCase: function dashToCamelCase(myString) {
+        return myString.replace(/-([a-z])/g, function (g) {
+            return g[1].toUpperCase();
+        });
+    },
+    createStyleNode: function createStyleNode() {
+        var styleNode = document.createElement('style');
+
+        styleNode.type = 'text/css';
+
+        return styleNode;
+    },
+    uid: function uid() {
+        return this.prefix + this.id++;
+    },
+    debounce: function debounce(func) {
+        var frame = null;
+
+        return function executedFunction() {
+            var context = this;
+            var args = arguments;
+
+            if (frame !== null) window.cancelAnimationFrame(frame);
+
+            frame = window.requestAnimationFrame(function () {
+                func.apply(context, args);
+            });
+        };
+    }
 };
-
+module.exports = exports['default'];
 
 /***/ })
 
