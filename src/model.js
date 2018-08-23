@@ -190,7 +190,8 @@ export default class Model {
         if (!this.firstChild) {
             this.firstChild = node;
         }
-
+        
+        this.lastChild.next = node;
         this.lastChild = node;
         this.$node.appendChild(node.$node);
 
