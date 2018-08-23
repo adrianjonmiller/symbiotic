@@ -1,6 +1,7 @@
 export default {
     id: 0,
     prefix: 'vnom-',
+    head: null,
     camelCaseToDash: function (myStr) {
         return myStr.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
     },

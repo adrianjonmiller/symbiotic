@@ -113,26 +113,21 @@ var _index2 = _interopRequireDefault(_index);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 new _index2.default({
-    'test': function test() {
-        var _this = this;
-
-        this.show = false;
-
-        setTimeout(function () {
-            _this.show = true;
-        }, 1000);
-
+    'div': function div() {
         var p2 = document.createElement('p');
         p2.setAttribute('class', 'js-test');
-        p2.innerHTML = 'p2';
-        // this.append(p1);
-        this.prepend(p2);
+        p2.innerHTML = 'test';
+        this.append(p2, {
+            'p': function p() {
+                // this.style.backgroundColor = 'red'
+            }
+        });
+        this.style = {
+            backgroundColor: 'blue'
+        };
     },
-    'js-test': function jsTest() {
-        console.log(this);
-    },
-    '#prevent': function prevent() {
-        console.log(this);
+    'p': function p() {
+        this.style.backgroundColor = 'oranage';
     }
 }).attach();
 
@@ -190,12 +185,11 @@ var Symbiote = function () {
 
     _createClass(Symbiote, [{
         key: 'attach',
-        value: function attach(el, attribute) {
+        value: function attach(el) {
             var _this = this;
 
             var $scope = getScope(el);
 
-            this.attribute = attribute ? _utils2.default.dashToCamelCase(attribute) : 'class';
             this.head = function findHead($node) {
                 if ($node.tagName === 'HTML') {
                     return $node.querySelector('head');
@@ -204,35 +198,39 @@ var Symbiote = function () {
                 }
             }($scope);
 
+            _utils2.default.head = this.head;
+
             ;(function (cb) {
                 if (document.readyState !== 'loading') {
-                    var vnom = cb();
-                    vnom.on('nodeAdded', function (newNode) {
-
-                        _this.init(newNode);
-                    });
-                    _this.init(vnom);
+                    cb();
                 } else {
                     document.addEventListener('DOMContentLoaded', function () {
-                        var vnom = cb();
-                        vnom.on('nodeAdded', function (newNode) {
-                            _this.init(newNode);
-                        });
-                        _this.init(vnom);
+                        cb();
                     });
                 }
             })(function () {
-                return new _model2.default($scope);
+                var t0 = performance.now();
+                var vnom = new _model2.default($scope);
+
+                vnom.on('!nodeAdded', function (payload) {
+                    _this.init(payload.node, payload.methods);
+                });
+
+                _this.init(vnom);
+
+                var t1 = performance.now();
+                console.log('JSI attached in ' + (t1 - t0) + ' milliseconds.');
             });
         }
     }, {
         key: 'init',
-        value: function init(vnom) {
-            vnom._head = this.head;
+        value: function init(vnom, methods) {
+            methods = methods || this.methods;
+
             var attribute = '';
             var attributeValue = '';
 
-            for (var method in this.methods) {
+            for (var method in methods) {
                 switch (method.charAt(0)) {
                     case '.':
                         attribute = 'class';
@@ -243,7 +241,7 @@ var Symbiote = function () {
                         attributeValue = method.substring(1);
                         break;
                     default:
-                        attribute = 'class';
+                        attribute = 'tagName';
                         attributeValue = method;
                 }
 
@@ -254,7 +252,7 @@ var Symbiote = function () {
                         }
 
                         if (vnom.methods[method] === undefined) {
-                            vnom.methods[method] = this.methods[method].bind(vnom);
+                            vnom.methods[method] = methods[method].bind(vnom);
                         }
                     }
                 }
@@ -318,8 +316,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-function updateStyles(style, $styleNode, id, head) {
-    console.log(head);
+function updateStyles(style, $styleNode, id) {
     _utils2.default.debounce(function () {
         if (Object.keys(style).length === 0) {
             $styleNode.innerHTML = '';
@@ -335,7 +332,7 @@ function updateStyles(style, $styleNode, id, head) {
         styleString += '}';
 
         if ($styleNode.parentNode === null) {
-            head.appendChild($styleNode);
+            _utils2.default.head.appendChild($styleNode);
         }
 
         $styleNode.innerHTML = styleString;
@@ -356,7 +353,7 @@ var Model = function () {
         this.next = null;
         this.prev = null;
         this.$node = $node;
-        this.tagName = $node.tagName;
+        this.tagName = $node.tagName.toLowerCase();
         this.id = $node.getAttribute('id') || _utils2.default.uid();
         this.head = null;
         this.show = true;
@@ -457,12 +454,12 @@ var Model = function () {
 
         Object.defineProperty(this.model, 'style', {
             get: function get() {
-                updateStyles(_this.style, _this.$styleNode, _this.id, _this.head);
+                updateStyles(_this.style, _this.$styleNode, _this.id);
                 return _this.style;
             },
             set: function set(val) {
                 Object.assign(_this.style, val);
-                updateStyles(_this.style, _this.$styleNode, _this.id, _this.head);
+                updateStyles(_this.style, _this.$styleNode, _this.id);
                 return _this.style;
             }
         });
@@ -523,26 +520,23 @@ var Model = function () {
 
     _createClass(Model, [{
         key: 'append',
-        value: function append($node, after) {
-            after = after || this.lastChild;
-
+        value: function append($node, methods) {
             var node = new Model($node);
             node.parent = this.model;
-
-            if (after) {
-                node.prev = after;
-                after = node;
-            }
 
             if (!this.firstChild) {
                 this.firstChild = node;
             }
 
-            this.lastChild.next = node;
+            if (this.lastChild) {
+                node.prev = this.lastChild;
+                this.lastChild.next = node;
+            }
+
             this.lastChild = node;
             this.$node.appendChild(node.$node);
 
-            this.emit('nodeAdded', node);
+            this.emit('!nodeAdded', { node: node, methods: methods });
 
             return node;
         }
@@ -561,7 +555,7 @@ var Model = function () {
             this.firstChild = node;
 
             this.$node.prepend(node.$node);
-            this.emit('nodeAdded', node);
+            this.emit('!nodeAdded', { node: node, methods: methods });
 
             return node;
         }
@@ -684,6 +678,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = {
     id: 0,
     prefix: 'vnom-',
+    head: null,
     camelCaseToDash: function camelCaseToDash(myStr) {
         return myStr.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
     },

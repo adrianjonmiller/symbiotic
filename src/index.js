@@ -19,10 +19,9 @@ export default class Symbiote {
         this.methods = methods;
     }
 
-    attach (el, attribute) {
+    attach (el) {
         const $scope = getScope(el);
 
-        this.attribute = attribute ? utils.dashToCamelCase(attribute) : 'class';
         this.head = (function findHead ($node) {     
             if ($node.tagName === 'HTML') {
                 return $node.querySelector('head')
@@ -31,32 +30,39 @@ export default class Symbiote {
             }
         })($scope);
 
+
+        utils.head = this.head;
+
         ;((cb) => {
             if (document.readyState !== 'loading') {
-                var vnom = cb();
-                vnom.on('nodeAdded', (newNode) => {
-                    
-                    this.init(newNode);
-                });
-                this.init(vnom);
+                cb();
             } else {
                 document.addEventListener('DOMContentLoaded', () => {
-                    var vnom = cb()
-                    vnom.on('nodeAdded', (newNode) => {
-                        this.init(newNode);
-                    });
-                    this.init(vnom);
+                    cb();   
                 });
             }
-        })(() => new Model($scope));
+        })(() => {
+            let t0 = performance.now();
+            const vnom = new Model($scope)
+
+            vnom.on('!nodeAdded', (payload) => {
+                this.init(payload.node, payload.methods);
+            });
+
+            this.init(vnom);
+
+            let t1 = performance.now();
+            console.log('JSI attached in ' + (t1 - t0) + ' milliseconds.');
+        });
     }
 
-    init (vnom) {
-        vnom._head = this.head;
+    init (vnom, methods) {
+        methods = methods || this.methods;
+
         let attribute = '';
         let attributeValue = '';
 
-        for (let method in this.methods) {
+        for (let method in methods) {
             switch (method.charAt(0)) {
                 case '.':
                     attribute = 'class';
@@ -67,7 +73,7 @@ export default class Symbiote {
                     attributeValue = method.substring(1);
                     break;
                 default:
-                    attribute = 'class'
+                    attribute = 'tagName'
                     attributeValue = method;
             }
 
@@ -78,7 +84,7 @@ export default class Symbiote {
                     }
 
                     if (vnom.methods[method] === undefined) {
-                        vnom.methods[method] = this.methods[method].bind(vnom);
+                        vnom.methods[method] = methods[method].bind(vnom);
                     }
                 }
             }

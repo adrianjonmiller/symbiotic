@@ -1,7 +1,6 @@
 import utils from './utils';
 
-function updateStyles (style, $styleNode, id, head) {
-    console.log(head);
+function updateStyles (style, $styleNode, id) {
     (utils.debounce(() => {
         if (Object.keys(style).length === 0) {
             $styleNode.innerHTML = ''
@@ -17,7 +16,7 @@ function updateStyles (style, $styleNode, id, head) {
         styleString += '}';
 
         if ($styleNode.parentNode === null) {
-            head.appendChild($styleNode);
+            utils.head.appendChild($styleNode);
         }
 
         $styleNode.innerHTML = styleString;
@@ -34,7 +33,7 @@ export default class Model {
         this.next = null;
         this.prev = null;
         this.$node = $node;
-        this.tagName = $node.tagName;
+        this.tagName = $node.tagName.toLowerCase();
         this.id = $node.getAttribute('id') || utils.uid();
         this.head = null;
         this.show = true;
@@ -135,12 +134,12 @@ export default class Model {
 
         Object.defineProperty(this.model, 'style', {
             get: () => {
-                updateStyles(this.style, this.$styleNode, this.id, this.head);
+                updateStyles(this.style, this.$styleNode, this.id);
                 return this.style;
             },
             set: (val) => {
                 Object.assign(this.style, val);
-                updateStyles(this.style, this.$styleNode, this.id, this.head);
+                updateStyles(this.style, this.$styleNode, this.id);
                 return this.style;
             }
         });
@@ -195,26 +194,23 @@ export default class Model {
         return this.model;
     }
 
-    append($node, after) {
-        after = after || this.lastChild;
-
+    append($node, methods) {
         let node = new Model($node);
         node.parent = this.model;
-
-        if (after) {
-            node.prev = after;
-            after = node;
-        }
 
         if (!this.firstChild) {
             this.firstChild = node;
         }
 
-        this.lastChild.next = node;
+        if (this.lastChild) {
+            node.prev = this.lastChild;
+            this.lastChild.next = node;
+        }
+        
         this.lastChild = node;
         this.$node.appendChild(node.$node);
 
-        this.emit('nodeAdded', node);
+        this.emit('!nodeAdded', {node: node, methods: methods});
 
         return node;
     }
@@ -232,7 +228,7 @@ export default class Model {
         this.firstChild = node;
 
         this.$node.prepend(node.$node);
-        this.emit('nodeAdded', node);
+        this.emit('!nodeAdded', { node: node, methods: methods });
 
         return node;
     }
