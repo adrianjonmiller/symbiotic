@@ -200,7 +200,7 @@ var Symbiote = function () {
             ;(function (cb) {
                 if (document.readyState !== 'loading') {
                     var vnom = cb();
-                    vnom.on('nodeAppended', function (newNode) {
+                    vnom.on('nodeAdded', function (newNode) {
                         console.log('node appeneded');
                         _this.init(newNode);
                     });
@@ -208,7 +208,7 @@ var Symbiote = function () {
                 } else {
                     document.addEventListener('DOMContentLoaded', function () {
                         var vnom = cb();
-                        vnom.on('nodeAppended', function (newNode) {
+                        vnom.on('nodeAdded', function (newNode) {
                             console.log('node appeneded');
                             _this.init(newNode);
                         });
@@ -233,15 +233,16 @@ var Symbiote = function () {
                     if (!vnom.methods) {
                         vnom.methods = {};
                     }
+                    if (!vnom.methods[method]) {
+                        vnom.methods[method] = _this2.methods[method].bind(vnom);
 
-                    vnom.methods[method] = _this2.methods[method].bind(vnom);
-
-                    if (index === array.length - 1) {
-                        for (var _method in vnom.methods) {
-                            try {
-                                vnom.methods[_method]();
-                            } catch (error) {
-                                console.error(error.stack);
+                        if (index === array.length - 1) {
+                            for (var _method in vnom.methods) {
+                                try {
+                                    vnom.methods[_method]();
+                                } catch (error) {
+                                    console.error(error.stack);
+                                }
                             }
                         }
                     }
@@ -498,7 +499,7 @@ var Model = function () {
             this.lastChild = node;
             this.$node.appendChild(node.$node);
 
-            this.emit('nodeAppended', node);
+            this.emit('nodeAdded', node);
 
             return node;
         }
@@ -517,7 +518,7 @@ var Model = function () {
 
             this.$node.prepend(node.$node);
 
-            this.emit('nodeAppended', node);
+            this.emit('nodeAdded', node);
 
             console.log(node);
 

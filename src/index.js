@@ -34,7 +34,7 @@ export default class Symbiote {
         ;((cb) => {
             if (document.readyState !== 'loading') {
                 var vnom = cb();
-                vnom.on('nodeAppended', (newNode) => {
+                vnom.on('nodeAdded', (newNode) => {
                     console.log('node appeneded')
                     this.init(newNode);
                 });
@@ -42,7 +42,7 @@ export default class Symbiote {
             } else {
                 document.addEventListener('DOMContentLoaded', () => {
                     var vnom = cb()
-                    vnom.on('nodeAppended', (newNode) => {
+                    vnom.on('nodeAdded', (newNode) => {
                         console.log('node appeneded')
                         this.init(newNode);
                     });
@@ -62,15 +62,16 @@ export default class Symbiote {
                 if (!vnom.methods) {
                     vnom.methods = {};
                 }
+                if (!vnom.methods[method]) {
+                    vnom.methods[method] = this.methods[method].bind(vnom);
 
-                vnom.methods[method] = this.methods[method].bind(vnom);
-
-                if (index === array.length - 1) {
-                    for (let method in vnom.methods) {
-                        try {
-                            (vnom.methods[method])()
-                        } catch (error) {
-                            console.error(error.stack);
+                    if (index === array.length - 1) {
+                        for (let method in vnom.methods) {
+                            try {
+                                (vnom.methods[method])()
+                            } catch (error) {
+                                console.error(error.stack);
+                            }
                         }
                     }
                 }

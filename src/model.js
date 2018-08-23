@@ -193,7 +193,7 @@ export default class Model {
         this.lastChild = node;
         this.$node.appendChild(node.$node);
 
-        this.emit('nodeAppended', node);
+        this.emit('nodeAdded', node);
 
         return node;
     }
@@ -211,7 +211,7 @@ export default class Model {
 
         this.$node.prepend(node.$node);
 
-        this.emit('nodeAppended', node);
+        this.emit('nodeAdded', node);
 
         console.log(node)
 
