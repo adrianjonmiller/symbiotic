@@ -5,6 +5,7 @@
   "main": "dist/main.js",
   "license": "MIT",
   "scripts": {
+    "docs": "webpack --progress --colors --watch --mode development --config=webpack.docs.config.js",
     "dev": "webpack --progress --colors --watch --mode development --config=webpack.development.config.js",
     "build": "webpack --progress --colors --mode production --config=webpack.production.config.js"
   },

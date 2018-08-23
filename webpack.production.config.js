@@ -7,6 +7,8 @@ module.exports = {
     entry: paths.src,
     output: {
         path: paths.dist,
+        libraryTarget: 'umd',
+        umdNamedDefine: true
     },
     module: {
         rules: [

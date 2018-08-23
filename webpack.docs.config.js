@@ -1,13 +1,13 @@
 const paths = require('./paths');
+const files = require('./files');
 const BrowserSyncPlugin = require('browser-sync-webpack-plugin');
-
 
 module.exports = {
     mode: 'development',
-    entry: paths.src,
+    entry: files.docs.app,
     devtool: 'source-map',
     output: {
-        path: paths.dist,
+        path: paths.docs,
         libraryTarget: 'umd',
         umdNamedDefine: true
     },

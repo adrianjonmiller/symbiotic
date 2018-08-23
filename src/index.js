@@ -66,7 +66,3 @@ export default class Symbiote {
         }
     }
 }
-
-if (window && window.Symbiote === undefined) {
-    window.Symbiote = Symbiote;
-}
