@@ -2,9 +2,11 @@ import Symbiote from '../src/index.js';
 
 new Symbiote({
     'test': function () {
-        // var p1 = document.createElement('p');
-        // p1.setAttribute('class', 'js-test');
-        // p1.innerHTML = 'p1'
+        this.show = false;
+
+        setTimeout(() => {
+            this.show = true;
+        }, 1000)
 
         var p2 = document.createElement('p');
         p2.setAttribute('class', 'js-test');

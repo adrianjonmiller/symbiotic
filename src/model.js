@@ -37,6 +37,7 @@ export default class Model {
         this.tagName = $node.tagName;
         this.id = $node.getAttribute('id') || utils.uid();
         this.head = null;
+        this.show = true;
 
         if (this.id !== $node.getAttribute('id')) {
             $node.setAttribute('id', this.id);
@@ -64,6 +65,24 @@ export default class Model {
                 return this.tagName;
             }
         });
+
+        Object.defineProperty(this.model, 'show', {
+            get: () => {
+                return this.show;
+            },
+            set: (val) => {
+                if (val) {
+                    if ($node.style.removeProperty) {
+                        $node.style.removeProperty('display');
+                    } else {
+                        $node.style.removeAttribute('display');
+                    }
+                } else {
+                    $node.style.display = 'none'
+                }
+                this.show = val;
+            }
+        })
 
         Object.defineProperty(this.model, '_head', {
             get: () => {
@@ -190,7 +209,7 @@ export default class Model {
         if (!this.firstChild) {
             this.firstChild = node;
         }
-        
+
         this.lastChild.next = node;
         this.lastChild = node;
         this.$node.appendChild(node.$node);

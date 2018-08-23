@@ -114,9 +114,13 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 new _index2.default({
     'test': function test() {
-        // var p1 = document.createElement('p');
-        // p1.setAttribute('class', 'js-test');
-        // p1.innerHTML = 'p1'
+        var _this = this;
+
+        this.show = false;
+
+        setTimeout(function () {
+            _this.show = true;
+        }, 1000);
 
         var p2 = document.createElement('p');
         p2.setAttribute('class', 'js-test');
@@ -355,6 +359,7 @@ var Model = function () {
         this.tagName = $node.tagName;
         this.id = $node.getAttribute('id') || _utils2.default.uid();
         this.head = null;
+        this.show = true;
 
         if (this.id !== $node.getAttribute('id')) {
             $node.setAttribute('id', this.id);
@@ -380,6 +385,24 @@ var Model = function () {
         Object.defineProperty(this.model, 'tagName', {
             get: function get() {
                 return _this.tagName;
+            }
+        });
+
+        Object.defineProperty(this.model, 'show', {
+            get: function get() {
+                return _this.show;
+            },
+            set: function set(val) {
+                if (val) {
+                    if ($node.style.removeProperty) {
+                        $node.style.removeProperty('display');
+                    } else {
+                        $node.style.removeAttribute('display');
+                    }
+                } else {
+                    $node.style.display = 'none';
+                }
+                _this.show = val;
             }
         });
 
@@ -515,6 +538,7 @@ var Model = function () {
                 this.firstChild = node;
             }
 
+            this.lastChild.next = node;
             this.lastChild = node;
             this.$node.appendChild(node.$node);
 
