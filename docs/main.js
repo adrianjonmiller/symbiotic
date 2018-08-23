@@ -114,7 +114,18 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 new _index2.default({
     'test': function test() {
-        this.style.color = 'blue';
+        var p1 = document.createElement('p');
+        p1.setAttribute('class', 'js-test');
+        p1.innerHTML = 'p1';
+
+        var p2 = document.createElement('p');
+        p2.setAttribute('class', 'js-test');
+        p2.innerHTML = 'p2';
+        this.append(p1);
+        this.prepend(p2);
+    },
+    'js-test': function jsTest() {
+        console.log(this);
     }
 }).attach();
 
@@ -188,10 +199,20 @@ var Symbiote = function () {
 
             ;(function (cb) {
                 if (document.readyState !== 'loading') {
-                    _this.init(cb());
+                    var vnom = cb();
+                    vnom.on('nodeAppended', function (newNode) {
+                        console.log('node appeneded');
+                        _this.init(newNode);
+                    });
+                    _this.init(vnom);
                 } else {
                     document.addEventListener('DOMContentLoaded', function () {
-                        _this.init(cb());
+                        var vnom = cb();
+                        vnom.on('nodeAppended', function (newNode) {
+                            console.log('node appeneded');
+                            _this.init(newNode);
+                        });
+                        _this.init(vnom);
                     });
                 }
             })(function () {
@@ -325,6 +346,7 @@ var Model = function () {
             on: this.on.bind(this),
             emit: this.emit.bind(this),
             append: this.append.bind(this),
+            prepend: this.prepend.bind(this),
             find: this.find.bind(this),
             findParent: this.findParent.bind(this)
         };
@@ -475,6 +497,31 @@ var Model = function () {
 
             this.lastChild = node;
             this.$node.appendChild(node.$node);
+
+            this.emit('nodeAppended', node);
+
+            return node;
+        }
+    }, {
+        key: 'prepend',
+        value: function prepend($node) {
+            var node = new Model($node);
+            node.parent = this.model;
+
+            if (this.firstChild) {
+                node.next = this.firstChild;
+                this.firstChild.prev = node;
+            }
+
+            this.firstChild = node;
+
+            this.$node.prepend(node.$node);
+
+            this.emit('nodeAppended', node);
+
+            console.log(node);
+
+            return node;
         }
     }, {
         key: 'emit',

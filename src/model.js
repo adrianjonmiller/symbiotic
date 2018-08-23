@@ -47,6 +47,7 @@ export default class Model {
             on: this.on.bind(this),
             emit: this.emit.bind(this),
             append: this.append.bind(this),
+            prepend: this.prepend.bind(this),
             find: this.find.bind(this),
             findParent: this.findParent.bind(this)
         };
@@ -191,6 +192,30 @@ export default class Model {
 
         this.lastChild = node;
         this.$node.appendChild(node.$node);
+
+        this.emit('nodeAppended', node);
+
+        return node;
+    }
+
+    prepend($node) {        
+        let node = new Model($node);
+        node.parent = this.model;
+
+        if (this.firstChild) {
+            node.next = this.firstChild;
+            this.firstChild.prev = node;
+        }
+
+        this.firstChild = node;
+
+        this.$node.prepend(node.$node);
+
+        this.emit('nodeAppended', node);
+
+        console.log(node)
+
+        return node;
     }
 
     emit(event, payload) {

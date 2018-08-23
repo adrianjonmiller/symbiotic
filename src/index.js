@@ -33,10 +33,20 @@ export default class Symbiote {
 
         ;((cb) => {
             if (document.readyState !== 'loading') {
-                this.init(cb());
+                var vnom = cb();
+                vnom.on('nodeAppended', (newNode) => {
+                    console.log('node appeneded')
+                    this.init(newNode);
+                });
+                this.init(vnom);
             } else {
                 document.addEventListener('DOMContentLoaded', () => {
-                    this.init(cb());
+                    var vnom = cb()
+                    vnom.on('nodeAppended', (newNode) => {
+                        console.log('node appeneded')
+                        this.init(newNode);
+                    });
+                    this.init(vnom);
                 });
             }
         })(() => new Model($scope));
