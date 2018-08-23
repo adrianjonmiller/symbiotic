@@ -126,6 +126,9 @@ new _index2.default({
     },
     'js-test': function jsTest() {
         console.log(this);
+    },
+    '#prevent': function prevent() {
+        console.log(this);
     }
 }).attach();
 
@@ -223,21 +226,25 @@ var Symbiote = function () {
         value: function init(vnom) {
             vnom._head = this.head;
             var attribute = '';
+            var attributeValue = '';
 
             for (var method in this.methods) {
                 switch (method.charAt(0)) {
                     case '.':
                         attribute = 'class';
+                        attributeValue = method.substring(1);
                         break;
                     case '#':
                         attribute = 'id';
+                        attributeValue = method.substring(1);
                         break;
                     default:
                         attribute = 'class';
+                        attributeValue = method;
                 }
 
                 if (vnom[attribute]) {
-                    if (vnom[attribute].split(' ').indexOf(method) > -1) {
+                    if (vnom[attribute].split(' ').indexOf(attributeValue) > -1) {
                         if (!vnom.methods) {
                             vnom.methods = {};
                         }

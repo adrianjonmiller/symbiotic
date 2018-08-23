@@ -54,21 +54,25 @@ export default class Symbiote {
     init (vnom) {
         vnom._head = this.head;
         let attribute = '';
+        let attributeValue = '';
 
         for (let method in this.methods) {
             switch (method.charAt(0)) {
                 case '.':
                     attribute = 'class';
+                    attributeValue = method.substring(1);     
                     break;
                 case '#':
                     attribute = 'id';
+                    attributeValue = method.substring(1);
                     break;
                 default:
                     attribute = 'class'
+                    attributeValue = method;
             }
 
             if (vnom[attribute]) {
-                if (vnom[attribute].split(' ').indexOf(method) > -1) {
+                if (vnom[attribute].split(' ').indexOf(attributeValue) > -1) {
                     if (!vnom.methods) {
                         vnom.methods = {};
                     }

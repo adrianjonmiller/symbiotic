@@ -1,5 +1,5 @@
 Arguments: 
-  /Users/adrianmiller/.nvm/versions/node/v10.2.0/bin/node /usr/local/Cellar/yarn/1.5.1_1/libexec/bin/yarn.js run watch
+  /Users/adrianmiller/.nvm/versions/node/v10.2.0/bin/node /usr/local/Cellar/yarn/1.5.1_1/libexec/bin/yarn.js run demo
 
 PATH: 
   /Users/adrianmiller/.rvm/gems/ruby-2.4.1/bin:/Users/adrianmiller/.rvm/gems/ruby-2.4.1@global/bin:/Users/adrianmiller/.rvm/rubies/ruby-2.4.1/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin:/Users/adrianmiller/.nvm/versions/node/v10.2.0/bin:/Users/adrianmiller/.rvm/gems/ruby-2.4.1/bin:/Users/adrianmiller/.rvm/gems/ruby-2.4.1@global/bin:/Users/adrianmiller/.rvm/rubies/ruby-2.4.1/bin:/Users/adrianmiller/.rvm/bin:/Users/adrianmiller/.rvm/bin
@@ -3035,7 +3035,7 @@ Lockfile:
       yargs-parser "^10.1.0"
 
 Trace: 
-  Error: Command "watch" not found.
+  Error: Command "demo" not found.
       at new MessageError (/usr/local/Cellar/yarn/1.5.1_1/libexec/lib/cli.js:186:110)
       at /usr/local/Cellar/yarn/1.5.1_1/libexec/lib/cli.js:87307:17
       at Generator.next (<anonymous>)

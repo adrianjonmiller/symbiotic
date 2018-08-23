@@ -14,5 +14,8 @@ new Symbiote({
     },
     'js-test': function () {
         console.log(this)
+    },
+    '#prevent': function () {
+        console.log(this)
     }
 }).attach();
