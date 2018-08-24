@@ -58,15 +58,16 @@ export default class Symbiote {
 
     init (vnom, methods) {
         methods = methods || this.methods;
-
-        let attribute = '';
-        let attributeValue = '';
+        var result = [];
 
         for (let method in methods) {
+            let attribute = '';
+            let attributeValue = '';
+
             switch (method.charAt(0)) {
                 case '.':
                     attribute = 'class';
-                    attributeValue = method.substring(1);     
+                    attributeValue = method.substring(1);
                     break;
                 case '#':
                     attribute = 'id';
@@ -79,34 +80,33 @@ export default class Symbiote {
 
             if (vnom[attribute]) {
                 if (vnom[attribute].split(' ').indexOf(attributeValue) > -1) {
+
                     if (!vnom.methods) {
                         vnom.methods = {};
                     }
 
                     if (vnom.methods[method] === undefined) {
                         vnom.methods[method] = methods[method].bind(vnom);
+
                     }
                 }
             }
         }
 
-        for (let method in vnom.methods) {
-            try {
-                if (vnom._init === false) {
-                    (vnom.methods[method])();
-                    vnom._init = true;
-                }
-            } catch (error) {
-                console.error(error.stack);
-            }
-        }
-
         if (vnom.child) {
-            this.init(vnom.child)
+            this.init(vnom.child, methods)
         }
 
         if (vnom.next) {
-            this.init(vnom.next)
+            this.init(vnom.next, methods)
+        }
+
+        for (let method in vnom.methods) {
+            try {
+                (vnom.methods[method])();
+            } catch (error) {
+                console.error(error.stack);
+            }
         }
     }
 }

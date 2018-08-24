@@ -113,21 +113,52 @@ var _index2 = _interopRequireDefault(_index);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 new _index2.default({
-    'div': function div() {
-        var p2 = document.createElement('p');
-        p2.setAttribute('class', 'js-test');
-        p2.innerHTML = 'test';
-        this.append(p2, {
-            'p': function p() {
-                // this.style.backgroundColor = 'red'
+    'body': function body() {
+        this.style = {
+            padding: '0 2rem',
+            margin: '0 auto',
+            maxWidth: '1080px',
+            fontFamily: 'Helvetica, sans-serif'
+        };
+
+        var h1 = document.createElement('h1');
+        this.append(h1, {
+            'h1': function h1() {
+                this.$node.innerHTML = 'Symbiote.js';
             }
         });
-        this.style = {
-            backgroundColor: 'blue'
-        };
-    },
-    'p': function p() {
-        this.style.backgroundColor = 'oranage';
+
+        var context = '<div aria-label="Show public link" class="toolbox-button js-showLink">\n                                    <div>\n                                        <div class="toolbox-icon" >\n                                            <i class="icon-link"></i>\n                                        </div>\n                                    </div>\n                                </div>';
+        var frag = document.createRange().createContextualFragment(context);
+
+        this.prepend(frag.firstElementChild, {
+            '.js-showLink': function jsShowLink() {
+                var _this = this;
+
+                console.log('success');
+                this.$node.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    console.log(e);
+                    _this.emit('showLinkBox');
+                });
+            }
+        });
+
+        var div = document.createElement('div');
+        var p = document.createElement('p');
+        var input = document.createElement('input');
+        var divNode = this.append(div);
+        divNode.append(p, {
+            'p': function p() {
+                this.$node.innerHTML = 'Copy this to install Symbiote.js';
+            }
+        });
+
+        divNode.append(input, {
+            'input': function input() {
+                this.$node.setAttribute('value', 'npm install https://github.com/adrianjonmiller/symbiote');
+            }
+        });
     }
 }).attach();
 
@@ -226,11 +257,12 @@ var Symbiote = function () {
         key: 'init',
         value: function init(vnom, methods) {
             methods = methods || this.methods;
-
-            var attribute = '';
-            var attributeValue = '';
+            var result = [];
 
             for (var method in methods) {
+                var attribute = '';
+                var attributeValue = '';
+
                 switch (method.charAt(0)) {
                     case '.':
                         attribute = 'class';
@@ -247,6 +279,7 @@ var Symbiote = function () {
 
                 if (vnom[attribute]) {
                     if (vnom[attribute].split(' ').indexOf(attributeValue) > -1) {
+
                         if (!vnom.methods) {
                             vnom.methods = {};
                         }
@@ -258,23 +291,20 @@ var Symbiote = function () {
                 }
             }
 
-            for (var _method in vnom.methods) {
-                try {
-                    if (vnom._init === false) {
-                        vnom.methods[_method]();
-                        vnom._init = true;
-                    }
-                } catch (error) {
-                    console.error(error.stack);
-                }
-            }
-
             if (vnom.child) {
-                this.init(vnom.child);
+                this.init(vnom.child, methods);
             }
 
             if (vnom.next) {
-                this.init(vnom.next);
+                this.init(vnom.next, methods);
+            }
+
+            for (var _method in vnom.methods) {
+                try {
+                    vnom.methods[_method]();
+                } catch (error) {
+                    console.error(error.stack);
+                }
             }
         }
     }]);
@@ -369,8 +399,7 @@ var Model = function () {
             append: this.append.bind(this),
             prepend: this.prepend.bind(this),
             find: this.find.bind(this),
-            findParent: this.findParent.bind(this),
-            _init: false
+            findParent: this.findParent.bind(this)
         };
 
         Object.defineProperty(this.model, 'id', {
@@ -521,6 +550,8 @@ var Model = function () {
     _createClass(Model, [{
         key: 'append',
         value: function append($node, methods) {
+            var _this2 = this;
+
             var node = new Model($node);
             node.parent = this.model;
 
@@ -534,15 +565,18 @@ var Model = function () {
             }
 
             this.lastChild = node;
-            this.$node.appendChild(node.$node);
 
-            this.emit('!nodeAdded', { node: node, methods: methods });
+            _utils2.default.debounce(function () {
+                _this2.$node.appendChild(node.$node);
+                _this2.emit('!nodeAdded', { node: node, methods: methods });
+            })();
 
             return node;
         }
     }, {
         key: 'prepend',
-        value: function prepend($node) {
+        value: function prepend($node, methods) {
+            var _this3 = this;
 
             var node = new Model($node);
             node.parent = this.model;
@@ -554,8 +588,10 @@ var Model = function () {
 
             this.firstChild = node;
 
-            this.$node.prepend(node.$node);
-            this.emit('!nodeAdded', { node: node, methods: methods });
+            _utils2.default.debounce(function () {
+                _this3.$node.prepend(node.$node);
+                _this3.emit('!nodeAdded', { node: node, methods: methods });
+            })();
 
             return node;
         }

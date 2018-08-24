@@ -49,8 +49,7 @@ export default class Model {
             append: this.append.bind(this),
             prepend: this.prepend.bind(this),
             find: this.find.bind(this),
-            findParent: this.findParent.bind(this),
-            _init: false
+            findParent: this.findParent.bind(this)
         };
 
         Object.defineProperty(this.model, 'id', {
@@ -208,14 +207,16 @@ export default class Model {
         }
         
         this.lastChild = node;
-        this.$node.appendChild(node.$node);
 
-        this.emit('!nodeAdded', {node: node, methods: methods});
+        (utils.debounce(() => {
+            this.$node.appendChild(node.$node);
+            this.emit('!nodeAdded', { node: node, methods: methods });
+        }))();
 
         return node;
     }
 
-    prepend($node) {
+    prepend($node, methods) {
         
         let node = new Model($node);
         node.parent = this.model;
@@ -227,8 +228,10 @@ export default class Model {
 
         this.firstChild = node;
 
-        this.$node.prepend(node.$node);
-        this.emit('!nodeAdded', { node: node, methods: methods });
+        (utils.debounce(() => {
+            this.$node.prepend(node.$node);
+            this.emit('!nodeAdded', { node: node, methods: methods });
+        }))();
 
         return node;
     }
