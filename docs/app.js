@@ -35,6 +35,7 @@ new Symbiote({
         var p = document.createElement('p');
         var input = document.createElement('input');
         var divNode = this.append(div);
+
         divNode.append(p, {
             'p': function () {
                 this.$node.innerHTML = 'Copy this to install Symbiote.js'
