@@ -1,5 +1,15 @@
 const paths = require('./paths');
-const BrowserSyncPlugin = require('browser-sync-webpack-plugin');
+const CompressionPlugin = require("compression-webpack-plugin");
+
+console.log(process.env.compress);
+
+var plugins = [];
+
+if (process.env.compress === 'true') {
+    plugins.push(new CompressionPlugin({
+        test: /\.js/
+    }));
+}
 
 
 module.exports = {
@@ -18,5 +28,6 @@ module.exports = {
                 exclude: /(node_modules|bower_components)/
             }
         ]
-    }
-}
+    },
+    plugins: plugins
+};

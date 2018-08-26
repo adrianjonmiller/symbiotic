@@ -1,4 +1,7 @@
 import Symbiote from '../src/index.js';
+import Button from './button.html';
+
+console.log(Button)
 
 new Symbiote({
     'body': function () {
@@ -9,6 +12,10 @@ new Symbiote({
             fontFamily: 'Helvetica, sans-serif'
         };
 
+        var frag = document.createRange().createContextualFragment(Button);
+
+        console.log(frag);
+
         var h1 = document.createElement('h1');
         this.append(h1, {
             'h1': function () {
@@ -16,23 +23,11 @@ new Symbiote({
             }
         });
 
-        var context = `<div aria-label="Show public link" class="toolbox-button js-showLink">
-                                    <div>
-                                        <div class="toolbox-icon" >
-                                            <i class="icon-link"></i>
-                                        </div>
-                                    </div>
-                                </div>`;
-        var frag = document.createRange().createContextualFragment(context);
-
-        this.prepend(frag.firstElementChild, {
-            '.js-showLink': function () {
-                console.log('success');
-                this.$node.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    console.log(e)
-                    this.emit('showLinkBox')
-                });
+        this.append(frag.firstElementChild, {
+            'button': function () {
+                this.$event('click', function () {
+                    console.log(this)
+                })
             }
         });
 

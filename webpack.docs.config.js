@@ -17,6 +17,11 @@ module.exports = {
                 test: /(\.jsx|\.js)$/,
                 loader: 'babel-loader',
                 exclude: /(node_modules|bower_components)/
+            }, {
+                test: /\.(html)$/,
+                use: {
+                    loader: 'html-loader'
+                }
             }
         ]
     },

@@ -44,6 +44,7 @@ export default class Model {
 
         this.model = {
             $node: $node,
+            $event: this.$event.bind(this),
             on: this.on.bind(this),
             emit: this.emit.bind(this),
             append: this.append.bind(this),
@@ -234,6 +235,11 @@ export default class Model {
         }))();
 
         return node;
+    }
+
+    $event(event, cb, useCapture) {
+        useCapture = useCapture || false;
+        this.$node.addEventListener(event, (e) => cb.apply(this.model, [e]), useCapture)
     }
 
     emit(event, payload) {

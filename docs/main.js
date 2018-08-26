@@ -110,7 +110,13 @@ var _index = __webpack_require__(/*! ../src/index.js */ "./src/index.js");
 
 var _index2 = _interopRequireDefault(_index);
 
+var _button = __webpack_require__(/*! ./button.html */ "./docs/button.html");
+
+var _button2 = _interopRequireDefault(_button);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+console.log(_button2.default);
 
 new _index2.default({
     'body': function body() {
@@ -121,6 +127,10 @@ new _index2.default({
             fontFamily: 'Helvetica, sans-serif'
         };
 
+        var frag = document.createRange().createContextualFragment(_button2.default);
+
+        console.log(frag);
+
         var h1 = document.createElement('h1');
         this.append(h1, {
             'h1': function h1() {
@@ -128,18 +138,10 @@ new _index2.default({
             }
         });
 
-        var context = '<div aria-label="Show public link" class="toolbox-button js-showLink">\n                                    <div>\n                                        <div class="toolbox-icon" >\n                                            <i class="icon-link"></i>\n                                        </div>\n                                    </div>\n                                </div>';
-        var frag = document.createRange().createContextualFragment(context);
-
-        this.prepend(frag.firstElementChild, {
-            '.js-showLink': function jsShowLink() {
-                var _this = this;
-
-                console.log('success');
-                this.$node.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    console.log(e);
-                    _this.emit('showLinkBox');
+        this.append(frag.firstElementChild, {
+            'button': function button() {
+                this.$event('click', function () {
+                    console.log(this);
                 });
             }
         });
@@ -161,6 +163,17 @@ new _index2.default({
         });
     }
 }).attach();
+
+/***/ }),
+
+/***/ "./docs/button.html":
+/*!**************************!*\
+  !*** ./docs/button.html ***!
+  \**************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = "<button>Button</button>";
 
 /***/ }),
 
@@ -394,6 +407,7 @@ var Model = function () {
 
         this.model = {
             $node: $node,
+            $event: this.$event.bind(this),
             on: this.on.bind(this),
             emit: this.emit.bind(this),
             append: this.append.bind(this),
@@ -594,6 +608,16 @@ var Model = function () {
             })();
 
             return node;
+        }
+    }, {
+        key: '$event',
+        value: function $event(event, cb, useCapture) {
+            var _this4 = this;
+
+            useCapture = useCapture || false;
+            this.$node.addEventListener(event, function (e) {
+                return cb.apply(_this4.model, [e]);
+            }, useCapture);
         }
     }, {
         key: 'emit',
