@@ -114,9 +114,11 @@ var _button = __webpack_require__(/*! ./button.html */ "./docs/button.html");
 
 var _button2 = _interopRequireDefault(_button);
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+var _test = __webpack_require__(/*! Plugins/test */ "./plugins/test.js");
 
-console.log(_button2.default);
+var _test2 = _interopRequireDefault(_test);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 new _index2.default({
     'body': function body() {
@@ -128,8 +130,6 @@ new _index2.default({
         };
 
         var frag = document.createRange().createContextualFragment(_button2.default);
-
-        console.log(frag);
 
         var h1 = document.createElement('h1');
         this.append(h1, {
@@ -150,6 +150,7 @@ new _index2.default({
         var p = document.createElement('p');
         var input = document.createElement('input');
         var divNode = this.append(div);
+
         divNode.append(p, {
             'p': function p() {
                 this.$node.innerHTML = 'Copy this to install Symbiote.js';
@@ -161,8 +162,12 @@ new _index2.default({
                 this.$node.setAttribute('value', 'npm install https://github.com/adrianjonmiller/symbiote');
             }
         });
-    }
-}).attach();
+    },
+    '#todo': function todo() {
+        console.log(this);
+    },
+    '.test': function test() {}
+}, [_test2.default]).attach();
 
 /***/ }),
 
@@ -174,6 +179,55 @@ new _index2.default({
 /***/ (function(module, exports) {
 
 module.exports = "<button>Button</button>";
+
+/***/ }),
+
+/***/ "./plugins/test.js":
+/*!*************************!*\
+  !*** ./plugins/test.js ***!
+  \*************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var _class = function _class(model, $node) {
+  // console.log(model, $node);
+
+  _classCallCheck(this, _class);
+};
+
+exports.default = _class;
+module.exports = exports["default"];
+
+/***/ }),
+
+/***/ "./src/global.js":
+/*!***********************!*\
+  !*** ./src/global.js ***!
+  \***********************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = {
+  plugins: null,
+  head: null,
+  vdom: {}
+};
+module.exports = exports["default"];
 
 /***/ }),
 
@@ -203,6 +257,10 @@ var _utils = __webpack_require__(/*! ./utils */ "./src/utils.js");
 
 var _utils2 = _interopRequireDefault(_utils);
 
+var _global = __webpack_require__(/*! ./global */ "./src/global.js");
+
+var _global2 = _interopRequireDefault(_global);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -221,10 +279,11 @@ function getScope(el) {
 }
 
 var Symbiote = function () {
-    function Symbiote(methods) {
+    function Symbiote(methods, plugins) {
         _classCallCheck(this, Symbiote);
 
-        this.methods = methods;
+        _global2.default.methods = methods;
+        _global2.default.plugins = plugins;
     }
 
     _createClass(Symbiote, [{
@@ -234,7 +293,7 @@ var Symbiote = function () {
 
             var $scope = getScope(el);
 
-            this.head = function findHead($node) {
+            _global2.default.head = function findHead($node) {
                 if ($node.tagName === 'HTML') {
                     return $node.querySelector('head');
                 } else {
@@ -254,13 +313,13 @@ var Symbiote = function () {
                 }
             })(function () {
                 var t0 = performance.now();
-                var vnom = new _model2.default($scope);
+                _this.vnom = new _model2.default($scope);
 
-                vnom.on('!nodeAdded', function (payload) {
+                _this.vnom.on('!nodeAdded', function (payload) {
                     _this.init(payload.node, payload.methods);
                 });
 
-                _this.init(vnom);
+                _this.init(_this.vnom);
 
                 var t1 = performance.now();
                 console.log('JSI attached in ' + (t1 - t0) + ' milliseconds.');
@@ -269,7 +328,7 @@ var Symbiote = function () {
     }, {
         key: 'init',
         value: function init(vnom, methods) {
-            methods = methods || this.methods;
+            methods = methods || _global2.default.methods;
             var result = [];
 
             for (var method in methods) {
@@ -355,32 +414,17 @@ var _utils = __webpack_require__(/*! ./utils */ "./src/utils.js");
 
 var _utils2 = _interopRequireDefault(_utils);
 
+var _global = __webpack_require__(/*! ./global */ "./src/global.js");
+
+var _global2 = _interopRequireDefault(_global);
+
+var _textNode = __webpack_require__(/*! ./textNode */ "./src/textNode.js");
+
+var _textNode2 = _interopRequireDefault(_textNode);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function updateStyles(style, $styleNode, id) {
-    _utils2.default.debounce(function () {
-        if (Object.keys(style).length === 0) {
-            $styleNode.innerHTML = '';
-            return;
-        }
-
-        var styleString = '#' + id + '{';
-
-        for (var prop in style) {
-            styleString += _utils2.default.camelCaseToDash(prop) + ':' + style[prop] + ';';
-        }
-
-        styleString += '}';
-
-        if ($styleNode.parentNode === null) {
-            _utils2.default.head.appendChild($styleNode);
-        }
-
-        $styleNode.innerHTML = styleString;
-    })();
-}
 
 var Model = function () {
     function Model($node) {
@@ -398,8 +442,8 @@ var Model = function () {
         this.$node = $node;
         this.tagName = $node.tagName.toLowerCase();
         this.id = $node.getAttribute('id') || _utils2.default.uid();
-        this.head = null;
         this.show = true;
+        this.textNodes = [];
 
         if (this.id !== $node.getAttribute('id')) {
             $node.setAttribute('id', this.id);
@@ -408,12 +452,20 @@ var Model = function () {
         this.model = {
             $node: $node,
             $event: this.$event.bind(this),
+            textNodes: this.textNodes,
             on: this.on.bind(this),
             emit: this.emit.bind(this),
             append: this.append.bind(this),
             prepend: this.prepend.bind(this),
             find: this.find.bind(this),
             findParent: this.findParent.bind(this)
+        };
+
+        _global2.default.vdom[this.id] = {
+            tagName: this.tagName,
+            id: this.id,
+            show: this.show,
+            nodeType: $node.nodeType
         };
 
         Object.defineProperty(this.model, 'id', {
@@ -443,15 +495,6 @@ var Model = function () {
                     $node.style.display = 'none';
                 }
                 _this.show = val;
-            }
-        });
-
-        Object.defineProperty(this.model, '_head', {
-            get: function get() {
-                return _this.head;
-            },
-            set: function set(val) {
-                _this.head = val;
             }
         });
 
@@ -497,66 +540,55 @@ var Model = function () {
 
         Object.defineProperty(this.model, 'style', {
             get: function get() {
-                updateStyles(_this.style, _this.$styleNode, _this.id);
+                _this.pdateStyles(_this.style, _this.$styleNode, _this.id);
                 return _this.style;
             },
             set: function set(val) {
                 Object.assign(_this.style, val);
-                updateStyles(_this.style, _this.$styleNode, _this.id);
+                _this.updateStyles(_this.style, _this.$styleNode, _this.id);
                 return _this.style;
             }
         });
 
-        if ($node.attributes) {
-            var _loop = function _loop(i) {
-                var attrName = _utils2.default.dashToCamelCase($node.attributes[i].nodeName);
-                var $attrValue = $node.attributes[i].nodeValue;
+        var data = {
+            items: [1, 2, 3, 4]
+        };
 
-                if (!_this[attrName]) {
-                    _this[attrName] = $attrValue;
-
-                    Object.defineProperty(_this.model, attrName, {
-                        get: function get() {
-                            return _this[attrName];
-                        },
-                        set: function set(val) {
-                            if (_this[attrName] !== val) {
-                                _this[attrName] = val;
-
-                                ;_utils2.default.debounce(function ($node) {
-                                    $node.setAttribute(_utils2.default.camelCaseToDash(attrName), _this[attrName]);
-                                })($node);
+        _utils2.default.check($node.attributes, function (attributes) {
+            return _utils2.default.loop(attributes, function (attribute) {
+                return _utils2.default.getAttributes(attribute, _this, _this.model);
+            });
+        });
+        _utils2.default.check($node.childNodes, function (children) {
+            return _utils2.default.loop(children, function ($child) {
+                return _utils2.default.getChildNodes($child, _this, _this.model);
+            });
+        });
+        this.textNodes = _utils2.default.check($node, function ($node) {
+            return _utils2.default.getTemplateNode($node, function ($template) {
+                var res = [];
+                (function getTextNodes($node) {
+                    return _utils2.default.check($node.childNodes, function ($childNodes) {
+                        var textNodes = _utils2.default.loop($childNodes, function ($child) {
+                            if ($child.nodeType === 1) {
+                                var newLoop = getTextNodes($child);
+                                return newLoop;
                             }
-                            return _this[attrName];
-                        }
+
+                            return _utils2.default.getTextNodes($child, function ($textNode) {
+                                var textNode = new _textNode2.default($textNode);
+                                return textNode;
+                            });
+                        });
+                        res = res.concat(textNodes);
                     });
-                }
-            };
+                })($template);
 
-            for (var i = 0; i < $node.attributes.length; i++) {
-                _loop(i);
-            }
-        }
+                return res;
+            });
+        });
 
-        if ($node.childNodes) {
-            for (var i = 0; i < $node.childNodes.length; i++) {
-                var $child = $node.childNodes[i];
-
-                if ($child.nodeType === 1) {
-                    var child = new Model($child);
-                    child.parent = this.model;
-
-                    if (!this.lastChild) {
-                        this.firstChild = child;
-                        this.model.child = child;
-                    } else {
-                        this.lastChild.next = child;
-                        child.prev = this.lastChild;
-                    }
-                    this.lastChild = child;
-                }
-            }
-        }
+        console.log(this.textNodes);
 
         return this.model;
     }
@@ -712,12 +744,115 @@ var Model = function () {
 
             this.events[name].push({ fn: fn, bubbles: bubbles });
         }
+    }, {
+        key: 'render',
+        value: function render() {}
+    }, {
+        key: 'updateStyles',
+        value: function updateStyles() {
+            var _this5 = this;
+
+            _utils2.default.debounce(function () {
+                if (!_utils2.default.check(_this5.style)) {
+                    _this5.$styleNode.innerHTML = '';
+                    return;
+                }
+
+                var styleString = '#' + _this5.id + '{';
+
+                _utils2.default.loop(_this5.style, function (value, prop) {
+                    styleString += _utils2.default.camelCaseToDash(prop) + ':' + value + ';';
+                });
+
+                styleString += '}';
+
+                if (_this5.$styleNode.parentNode === null) {
+                    _global2.default.head.appendChild(_this5.$styleNode);
+                }
+
+                _this5.$styleNode.innerHTML = styleString;
+            })();
+        }
     }]);
 
     return Model;
 }();
 
 exports.default = Model;
+module.exports = exports['default'];
+
+/***/ }),
+
+/***/ "./src/textNode.js":
+/*!*************************!*\
+  !*** ./src/textNode.js ***!
+  \*************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _utils = __webpack_require__(/*! ./utils */ "./src/utils.js");
+
+var _utils2 = _interopRequireDefault(_utils);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var _class = function _class($textNode) {
+  _classCallCheck(this, _class);
+
+  // this.data = {
+  //   some: {
+  //     thing: 'this is useful',
+  //     awesome: 'this is awesome'
+  //   }
+  // };
+
+  // var text = {};
+
+  // const ctx = this;
+  // this.model = {};
+  // this.content = $textNode.content || $textNode.nodeValue;
+  // this.$node = $textNode;
+
+  // var vars = this.content.match(/{{{?(#[a-z ]+ )?[a-z ]+.[a-z ]*}?}}/g);
+
+  // if (vars) {
+  //   this.model.vars = vars.map((item) => {return item.replace(/{{|}}/g, '')});
+  // }
+
+  // if (this.model.vars) {
+  //   this.model.vars.forEach((item, index, array) => {
+  //     var ref = item.trim();
+  //     console.log(ref)
+  //     var res = utils.stringRef(ref, this.data);
+  //     var replaceStr = `{{${item}}}`;
+
+  //     console.log(res)
+
+  //     if (res) {
+  //       this.content = this.content.replace(`{{${item}}}`, res);
+  //     } else {
+  //       this.content = this.content.replace(`{{${item}}}`, '');
+  //     }
+
+  //     if (index === array.length - 1) {
+  //       this.$node.nodeValue = this.content;
+  //     }
+  //   })
+  // }
+
+  return $textNode;
+};
+
+exports.default = _class;
 module.exports = exports['default'];
 
 /***/ }),
@@ -735,10 +870,26 @@ module.exports = exports['default'];
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var _model = __webpack_require__(/*! ./model */ "./src/model.js");
+
+var _model2 = _interopRequireDefault(_model);
+
+var _textNode = __webpack_require__(/*! ./textNode */ "./src/textNode.js");
+
+var _textNode2 = _interopRequireDefault(_textNode);
+
+var _global = __webpack_require__(/*! ./global */ "./src/global.js");
+
+var _global2 = _interopRequireDefault(_global);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 exports.default = {
     id: 0,
     prefix: 'vnom-',
-    head: null,
     camelCaseToDash: function camelCaseToDash(myStr) {
         return myStr.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
     },
@@ -770,8 +921,219 @@ exports.default = {
                 func.apply(context, args);
             });
         };
+    },
+    isNode: function isNode(o) {
+        return (typeof Node === 'undefined' ? 'undefined' : _typeof(Node)) === "object" ? o instanceof Node : o && (typeof o === 'undefined' ? 'undefined' : _typeof(o)) === "object" && typeof o.nodeType === "number" && typeof o.nodeName === "string";
+    },
+    check: function check(item, cb) {
+        if (item === null) {
+            return false;
+        }
+
+        if (item === undefined) {
+            return false;
+        }
+
+        switch (typeof item === 'undefined' ? 'undefined' : _typeof(item)) {
+            case 'array':
+                if (item.length === 0) {
+                    return false;
+                }
+                break;
+            case 'object':
+                if (!this.isNode(item)) {
+                    if (Object.keys(item).length === 0) {
+                        return false;
+                    }
+                }
+                break;
+            case 'string':
+                if (item === '') {
+                    return false;
+                }
+                break;
+        }
+
+        if (typeof cb === 'function') {
+            return cb.apply(null, [item]);
+        }
+
+        return true;
+    },
+    loop: function loop(object, cb) {
+        var length = object.length;
+        var result = [];
+
+        if (length > 0) {
+            for (var i = 0; i < length; i++) {
+                var res = cb.apply(null, [object[i], i, length]);
+                if (res) {
+                    result.push(res);
+                }
+            }
+        } else {
+            for (var key in object) {
+                var _res = cb.apply(null, [object[key], key]);
+                if (_res) {
+                    result.push();
+                }
+            }
+        }
+        return result;
+    },
+    getAttributes: function getAttributes(attribute, root, model) {
+        var attrName = this.dashToCamelCase(attribute.nodeName);
+        var $attrValue = attribute.nodeValue;
+
+        if (!root[attrName] && attrName !== 'id' && attrName !== 'for') {
+            root[attrName] = $attrValue;
+
+            Object.defineProperty(model, attrName, {
+                get: function get() {
+                    return root[attrName];
+                },
+                set: function set(val) {
+                    if (root[attrName] !== val) {
+                        root[attrName] = val;
+
+                        ;utils.debounce(function ($node) {
+                            $node.setAttribute(utils.camelCaseToDash(attrName), root[attrName]);
+                        })($node);
+                    }
+                }
+            });
+        }
+    },
+    getChildNodes: function getChildNodes($child, root, model) {
+        if ($child.nodeType === 1) {
+            var child = new _model2.default($child, _global2.default.plugins);
+            child.parent = model;
+
+            if (!root.lastChild) {
+                root.firstChild = child;
+                model.child = child;
+            } else {
+                root.lastChild.next = child;
+                child.prev = root.lastChild;
+            }
+            root.lastChild = child;
+        }
+    },
+    getTextNodes: function getTextNodes($child, cb) {
+        if ($child.nodeType === 3) {
+            if ($child.nodeValue.trim().length > 0) {
+                return cb($child);
+            }
+        }
+    },
+    getTemplateNode: function getTemplateNode($node, cb) {
+        if ($node.tagName === 'TEMPLATE') {
+            if (typeof cb === 'function') {
+                return cb.apply(null, [$node.content.firstElementChild]);
+            }
+            return $node.content.firstElementChild;
+        }
+    },
+    stringRef: function stringRef(ref, object) {
+        return ref.split('.').reduce(function (object, i) {
+            return object[i];
+        }, object);
     }
 };
+
+// var textNodes = (function getTemplateNodes ($template) {
+//     if ($template.childNodes.length > 0) {
+//         return utils.loop($template.childNodes, ($item) => {
+//             if ($item.nodeType === 3) {
+//                 return $item
+//             }
+//             return getTemplateNodes($item)[0]
+//         })
+//     }
+// })($template);
+
+// for (let i=0; i < textNodes.length; i++) {
+//     var textNode = textNodes[i];
+
+//     var names = textNode.nodeValue.split(/{{|}}/g).filter((item) => {
+//         return item.trim() !== '';
+//     });
+
+//     for (let j=0; j < names.length; j++) {
+//         var name = names[j]
+//         if (!template[name]) {
+//             template[name] = [];
+//         }
+
+//         template[name].push(textNode)
+//     }
+// }
+
+// var names = textNode.nodeValue.split(/{{|}}/g).filter((item) => {
+//     return item.trim() !== '';
+// });
+
+//     var data = {};
+//     var temp = ['a', 'b', 'c', 'd'];
+
+//     Object.defineProperty(data, 'items', {
+//         get: () => {
+//             return temp;
+//         },
+//         set: (val) => {
+//             temp = val;
+//         }
+//     });
+
+//     Object.defineProperty(data.items, 'push', {
+//         configurable: false,
+//         enumerable: false, // hide from for...in
+//         writable: false,
+//         value: function (val) {
+//             for (var i = 0, n = this.length, l = arguments.length; i < l; i++, n++) {   
+//                 console.log(this, n, this[n] = val)       
+//             }
+//             return n;
+//         }
+//     });
+
+//     data.items.push('f');
+
+//     utils.check($node.getAttribute('for'), (string) => {
+//         let args = string.split('in').map((item) => {return item.trim()});
+//         let array = data[args[1]];
+//         let key = args[0];
+
+//         if (utils.check(array)) {
+//             utils.loop(array, (item) => {
+//                 (function render (node) {
+//                     if (utils.check(node.parent)) {
+//                         var $clone = $template.cloneNode(true);
+
+//                         (function getTemplateNodes ($template) {
+//                             if ($template.childNodes.length > 0) {
+//                                 return utils.loop($template.childNodes, ($item) => {
+//                                     if ($item.nodeType === 3) {
+//                                         $item.textContent = $item.textContent.replace(`{{${key}}}`, item);
+//                                         return $item;
+//                                     }
+//                                     return getTemplateNodes($item)[0]
+//                                 })
+//                             }
+//                         })($clone);
+
+//                         node.parent.append($clone);
+//                     } else {
+//                         window.requestAnimationFrame( () => render(node));
+//                     }
+//                 })(this);
+//             });
+//         }
+//     });
+// }));
+
+// utils.check(global.plugins, (plugins) => utils.loop(plugins, (Plugin) => new Plugin(this.model, $node)));
+
 module.exports = exports['default'];
 
 /***/ })

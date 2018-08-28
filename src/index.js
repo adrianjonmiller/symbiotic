@@ -1,5 +1,6 @@
 import Model from './model';
 import utils from './utils';
+import global from './global';
 
 function getScope (el) {
     if (el === undefined) {
@@ -15,14 +16,15 @@ function getScope (el) {
 }
 
 export default class Symbiote {
-    constructor (methods) {
-        this.methods = methods;
+    constructor (methods, plugins) {
+        global.methods = methods;
+        global.plugins = plugins;
     }
 
     attach (el) {
         const $scope = getScope(el);
 
-        this.head = (function findHead ($node) {     
+        global.head = (function findHead ($node) {     
             if ($node.tagName === 'HTML') {
                 return $node.querySelector('head')
             } else {
@@ -43,13 +45,13 @@ export default class Symbiote {
             }
         })(() => {
             let t0 = performance.now();
-            const vnom = new Model($scope)
+            this.vnom = new Model($scope)
 
-            vnom.on('!nodeAdded', (payload) => {
+            this.vnom.on('!nodeAdded', (payload) => {
                 this.init(payload.node, payload.methods);
             });
 
-            this.init(vnom);
+            this.init(this.vnom);
 
             let t1 = performance.now();
             console.log('JSI attached in ' + (t1 - t0) + ' milliseconds.');
@@ -57,7 +59,7 @@ export default class Symbiote {
     }
 
     init (vnom, methods) {
-        methods = methods || this.methods;
+        methods = methods || global.methods;
         var result = [];
 
         for (let method in methods) {

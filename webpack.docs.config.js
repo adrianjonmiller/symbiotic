@@ -11,6 +11,11 @@ module.exports = {
         libraryTarget: 'umd',
         umdNamedDefine: true
     },
+    resolve: {
+        alias: {
+            Plugins: paths.plugins
+        }
+    },
     module: {
         rules: [
             {

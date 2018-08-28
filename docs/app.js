@@ -1,7 +1,6 @@
 import Symbiote from '../src/index.js';
 import Button from './button.html';
-
-console.log(Button)
+import Plugin from 'Plugins/test'
 
 new Symbiote({
     'body': function () {
@@ -13,8 +12,6 @@ new Symbiote({
         };
 
         var frag = document.createRange().createContextualFragment(Button);
-
-        console.log(frag);
 
         var h1 = document.createElement('h1');
         this.append(h1, {
@@ -47,5 +44,10 @@ new Symbiote({
                 this.$node.setAttribute('value', 'npm install https://github.com/adrianjonmiller/symbiote')
             }
         });
+    },
+    '#todo': function () {
+        console.log(this)
+    },
+    '.test': function () {
     }
-}).attach();
+}, [Plugin]).attach();

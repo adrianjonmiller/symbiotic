@@ -7,7 +7,14 @@
         <title>Document</title>
     </head>
     <body>
-        <div id="main" class="test">
+        <div id="main" class="test">            
+            <aside>
+                <ul class="sidebar">
+                    <template id="todo" for="item in items">
+                        <li>Some text {{name}} text <a href="">{{item}} <span>{{something}}</span> {{something.else}} </a></li>
+                    </template>
+                </ul>
+            </aside>
         </div>
         <script src="./main.js"></script>
     </body>
