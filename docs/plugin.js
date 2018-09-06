@@ -1,5 +1,5 @@
 export default class {
   constructor (model) {
-    model.somethingX = 'this';
+    console.log(model);
   }
 }

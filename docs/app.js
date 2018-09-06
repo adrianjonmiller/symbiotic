@@ -1,14 +1,41 @@
 import Symbiote from '../src/index.js';
 import Button from './button.html';
 import Plugin from 'Plugins/test'
+import Plugin2 from './plugin';
 
 new Symbiote({
     methods: {
         'body': function () {   
-            this.data.something.test = 'success1'
+            this.extend({
+                something: function () {
+                    return 'test'
+                }
+            });
         },
         '#todo': function () {
-            this.data.something.test = 'success2'
+            var data = [
+                {
+                    name: 'Bill',
+                    sex: "Male",
+                    shower: 'No'
+                },{
+                    name: 'Bill',
+                    sex: "Male",
+                    shower: 'No'
+                }
+            ]
+
+            this.plugins([Plugin2]);
+
+            data.forEach((item) => {
+                this.render({
+                    data: item
+                });
+            });
+
+            this.extend({
+                data: 'data'
+            })
         },
         '#test': function () {
             var div = document.createElement('div');
@@ -16,7 +43,16 @@ new Symbiote({
                 console.log(this)
             })
 
-            this.render('<div class="something"></div>');
+            var nodes = this.render({
+                template: '<div class="">{{   something.is}}</div>',
+                data: {
+                    something: {
+                        is: 'awesome'
+                    }
+                } 
+            });
+
+            console.log(nodes)
         }
     },
     plugins: [Plugin],

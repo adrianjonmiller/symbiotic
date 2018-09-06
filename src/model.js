@@ -1,18 +1,16 @@
 'use strict';
 /** 
  * TODO:
- * [ ]: Apply plugins directly to model
- * -- [ ]: At append time
- * -- [ ]: With bound method
+ * [X]: Apply plugins directly to model
+ * -- [X]: At append time
+ * -- [X]: With bound method
  * [ ]: Apply data directly to model
  * -- [ ]: When appended
- * -- [ ]: With a bound method
- * [ ]: this.render function
- * -- [ ]: Accepts a string
- * -- [ ]: Accepts a dom node
- * -- 
- * [ ]: Uses a <template> if it exists
- * [ ]: make a @this method points to the root element ex: '@this': function () {
+ * -- [X]: With a bound method
+ * [X]: this.render function
+ * -- [X]: Accepts a string
+ * [X]: Uses a <template> if it exists
+ * [X]: make a single function method points to the root element ex: '@this': function () {
  *  console.log(this) <--- the root element of the append
  * }
 */
@@ -20,10 +18,11 @@
 import utils from './utils';
 import global from './global';
 import observe from './observe';
+import Data from './data';
+import { throwError } from 'rxjs';
 
 export default class Model {
-    constructor ($node, data) {    
-        data = global.data || data;
+    constructor ($node) {    
         this.$styleNode = utils.createStyleNode();
         this.events = {};
         this.style = {};
@@ -37,13 +36,7 @@ export default class Model {
         this.show = true;
         this.textNodes = [];
 
-
-        if (this.id !== $node.getAttribute('id')) {
-            $node.setAttribute('id', this.id);
-        }
-
         this.model = {
-            data: observe(data, this.watchers),
             $node: $node,
             $event: this.$event.bind(this),
             textNodes: this.textNodes,
@@ -53,8 +46,19 @@ export default class Model {
             prepend: this.prepend.bind(this),
             find: this.find.bind(this),
             findParent: this.findParent.bind(this),
-            render: this.render.bind(this)
+            render: this.render.bind(this),
+            plugins: this.plugins.bind(this),
+            extend: this.extend.bind(this)
         };
+
+        if (this.id !== $node.getAttribute('id')) {
+            $node.setAttribute('id', this.id);
+        }
+
+        if (this.tagName === 'template') {
+            this.template = utils.getTemplateNode($node);
+            this.model.template = this.template;
+        }
 
         global.vdom[this.id] = {
             tagName: this.tagName,
@@ -186,7 +190,9 @@ export default class Model {
             }
         }));
 
-        this.template = utils.getTemplateNode($node);
+        if (global.plugins !== null) {
+            this.plugins(global.plugins);
+        }
 
         return this.model;
     }
@@ -238,9 +244,35 @@ export default class Model {
         this.$node.addEventListener(event, (e) => cb.apply(this.model, [e]), useCapture)
     }
 
-    render (template, data) {
-        console.log(template)
-        // let template = document.createRange().createContextualFragment(template);
+    render (args) {
+        if (!args.template && this.tagName !== 'template') {
+            return
+        }
+        let template = args.template || this.template;
+        let data = args.data || {};
+        let methods = args.methods || global.methods;
+        let refs = template.match(/{{{?(#[a-z ]+ )?[a-z ]+.[a-z ]*}?}}/g);
+        let range = document.createRange();
+
+        utils.check(refs, (refs) => utils.loop(refs, (ref) => {
+            var key = ref.replace(/{{|}}/g, '').trim();
+            var value = utils.stringRef(key, data);
+
+            template = template.replace(ref, value);
+        }))
+
+        let frag = range.createContextualFragment(template);
+
+        return utils.check(frag.children, ($children) => utils.loop($children, ($child) => {
+            if (this.tagName === 'template') {
+                if (this.parent !== undefined) {
+                    return this.parent.append($child, methods)
+                }
+            } else {
+                return this.append($child, methods);
+            }
+            
+        }))
     }
 
     emit(event, payload) {
@@ -355,5 +387,42 @@ export default class Model {
     
             this.$styleNode.innerHTML = styleString;
         }))();
+    }
+
+    plugins (Plugins) {
+        if (!Plugins.length > 0) {
+            return null
+        }
+
+        utils.check(Plugins, () => utils.loop(Plugins, (Plugin) => {
+            new Plugin(this.model)
+        }));
+    }
+
+    extend (data) {
+        (function loop (model, data) {
+            utils.check(data, (data) => utils.loop(data, (value, key) => {
+                if (model[key] !== undefined) {
+                    throw 'Key on model cannot be redefined';
+                }
+
+                let Proxy = new Data(value);
+                if (typeof value === 'object') {
+                    model[key] = model[key] || {};
+                    loop(model[key], value)
+                } else {
+                    Object.defineProperty(model, key, {
+                        get: () => {
+                            return Proxy.get();
+                        },
+                        set: (val) => {
+                            Proxy.set(val)
+                        },
+                        configurable: true
+                    })
+                }
+            }))
+        })(this.model, data)
+        
     }
 }

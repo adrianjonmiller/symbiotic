@@ -107,14 +107,18 @@ export default {
     getTemplateNode ($node, cb) {
         if ($node.tagName === 'TEMPLATE') {
             if (typeof cb === 'function') {
-                return cb.apply(null, [$node.content.firstElementChild]);
+                return cb.apply(null, [$node.innerHTML]);
             }
-            return $node.content.firstElementChild;
+            return $node.innerHTML;
         }
      },
     stringRef (ref, object) {
         return ref.split('.').reduce((object,i) => {
-            return object[i]
+            if (object[i]) {
+                return object[i]
+            } else {
+                return ''
+            }
         }, object);
     }
 };
