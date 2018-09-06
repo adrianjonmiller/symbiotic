@@ -121,53 +121,30 @@ var _test2 = _interopRequireDefault(_test);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 new _index2.default({
-    'body': function body() {
-        this.style = {
-            padding: '0 2rem',
-            margin: '0 auto',
-            maxWidth: '1080px',
-            fontFamily: 'Helvetica, sans-serif'
-        };
+    methods: {
+        'body': function body() {
+            this.data.something.test = 'success1';
+        },
+        '#todo': function todo() {
+            this.data.something.test = 'success2';
+        },
+        '#test': function test() {
+            var div = document.createElement('div');
+            this.append(div, function () {
+                console.log(this);
+            });
 
-        var frag = document.createRange().createContextualFragment(_button2.default);
-
-        var h1 = document.createElement('h1');
-        this.append(h1, {
-            'h1': function h1() {
-                this.$node.innerHTML = 'Symbiote.js';
-            }
-        });
-
-        this.append(frag.firstElementChild, {
-            'button': function button() {
-                this.$event('click', function () {
-                    console.log(this);
-                });
-            }
-        });
-
-        var div = document.createElement('div');
-        var p = document.createElement('p');
-        var input = document.createElement('input');
-        var divNode = this.append(div);
-
-        divNode.append(p, {
-            'p': function p() {
-                this.$node.innerHTML = 'Copy this to install Symbiote.js';
-            }
-        });
-
-        divNode.append(input, {
-            'input': function input() {
-                this.$node.setAttribute('value', 'npm install https://github.com/adrianjonmiller/symbiote');
-            }
-        });
+            this.render('<div class="something"></div>');
+        }
     },
-    '#todo': function todo() {
-        console.log(this);
-    },
-    '.test': function test() {}
-}, [_test2.default]).attach();
+    plugins: [_test2.default],
+    data: {
+        name: 'some data',
+        something: {
+            test: 'awesome'
+        }
+    }
+}).attach();
 
 /***/ }),
 
@@ -227,7 +204,7 @@ exports.default = {
   head: null,
   vdom: {}
 };
-module.exports = exports["default"];
+module.exports = exports['default'];
 
 /***/ }),
 
@@ -261,6 +238,10 @@ var _global = __webpack_require__(/*! ./global */ "./src/global.js");
 
 var _global2 = _interopRequireDefault(_global);
 
+var _observe = __webpack_require__(/*! ./observe */ "./src/observe.js");
+
+var _observe2 = _interopRequireDefault(_observe);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -279,11 +260,12 @@ function getScope(el) {
 }
 
 var Symbiote = function () {
-    function Symbiote(methods, plugins) {
+    function Symbiote(config) {
         _classCallCheck(this, Symbiote);
 
-        _global2.default.methods = methods;
-        _global2.default.plugins = plugins;
+        _global2.default.data = config.data || {};
+        _global2.default.methods = config.methods || {};
+        _global2.default.plugins = config.plugins || [];
     }
 
     _createClass(Symbiote, [{
@@ -301,8 +283,6 @@ var Symbiote = function () {
                 }
             }($scope);
 
-            _utils2.default.head = this.head;
-
             ;(function (cb) {
                 if (document.readyState !== 'loading') {
                     cb();
@@ -313,7 +293,7 @@ var Symbiote = function () {
                 }
             })(function () {
                 var t0 = performance.now();
-                _this.vnom = new _model2.default($scope);
+                _this.vnom = new _model2.default($scope, _global2.default.data);
 
                 _this.vnom.on('!nodeAdded', function (payload) {
                     _this.init(payload.node, payload.methods);
@@ -322,14 +302,18 @@ var Symbiote = function () {
                 _this.init(_this.vnom);
 
                 var t1 = performance.now();
-                console.log('JSI attached in ' + (t1 - t0) + ' milliseconds.');
+                console.log('Symbiote attached in ' + (t1 - t0) + ' milliseconds.');
             });
         }
     }, {
         key: 'init',
         value: function init(vnom, methods) {
             methods = methods || _global2.default.methods;
-            var result = [];
+
+            if (typeof methods === 'function') {
+                methods.apply(vnom);
+                return;
+            }
 
             for (var method in methods) {
                 var attribute = '';
@@ -403,6 +387,23 @@ module.exports = exports['default'];
 
 "use strict";
 
+/** 
+ * TODO:
+ * [ ]: Apply plugins directly to model
+ * -- [ ]: At append time
+ * -- [ ]: With bound method
+ * [ ]: Apply data directly to model
+ * -- [ ]: When appended
+ * -- [ ]: With a bound method
+ * [ ]: this.render function
+ * -- [ ]: Accepts a string
+ * -- [ ]: Accepts a dom node
+ * -- 
+ * [ ]: Uses a <template> if it exists
+ * [ ]: make a @this method points to the root element ex: '@this': function () {
+ *  console.log(this) <--- the root element of the append
+ * }
+*/
 
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -418,20 +419,21 @@ var _global = __webpack_require__(/*! ./global */ "./src/global.js");
 
 var _global2 = _interopRequireDefault(_global);
 
-var _textNode = __webpack_require__(/*! ./textNode */ "./src/textNode.js");
+var _observe = __webpack_require__(/*! ./observe */ "./src/observe.js");
 
-var _textNode2 = _interopRequireDefault(_textNode);
+var _observe2 = _interopRequireDefault(_observe);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Model = function () {
-    function Model($node) {
+    function Model($node, data) {
         var _this = this;
 
         _classCallCheck(this, Model);
 
+        data = _global2.default.data || data;
         this.$styleNode = _utils2.default.createStyleNode();
         this.events = {};
         this.style = {};
@@ -450,6 +452,7 @@ var Model = function () {
         }
 
         this.model = {
+            data: (0, _observe2.default)(data, this.watchers),
             $node: $node,
             $event: this.$event.bind(this),
             textNodes: this.textNodes,
@@ -458,7 +461,8 @@ var Model = function () {
             append: this.append.bind(this),
             prepend: this.prepend.bind(this),
             find: this.find.bind(this),
-            findParent: this.findParent.bind(this)
+            findParent: this.findParent.bind(this),
+            render: this.render.bind(this)
         };
 
         _global2.default.vdom[this.id] = {
@@ -550,45 +554,51 @@ var Model = function () {
             }
         });
 
-        var data = {
-            items: [1, 2, 3, 4]
-        };
-
         _utils2.default.check($node.attributes, function (attributes) {
             return _utils2.default.loop(attributes, function (attribute) {
-                return _utils2.default.getAttributes(attribute, _this, _this.model);
+                var attrName = _utils2.default.dashToCamelCase(attribute.nodeName);
+                var $attrValue = attribute.nodeValue;
+
+                if (!_this[attrName] && attrName !== 'id' && attrName !== 'for') {
+                    _this[attrName] = $attrValue;
+
+                    Object.defineProperty(_this.model, attrName, {
+                        get: function get() {
+                            return _this[attrName];
+                        },
+                        set: function set(val) {
+                            if (_this[attrName] !== val) {
+                                _this[attrName] = val;
+
+                                ;_utils2.default.debounce(function ($node) {
+                                    $node.setAttribute(_utils2.default.camelCaseToDash(attrName), root[attrName]);
+                                })($node);
+                            }
+                        }
+                    });
+                }
             });
         });
+
         _utils2.default.check($node.childNodes, function (children) {
             return _utils2.default.loop(children, function ($child) {
-                return _utils2.default.getChildNodes($child, _this, _this.model);
-            });
-        });
-        this.textNodes = _utils2.default.check($node, function ($node) {
-            return _utils2.default.getTemplateNode($node, function ($template) {
-                var res = [];
-                (function getTextNodes($node) {
-                    return _utils2.default.check($node.childNodes, function ($childNodes) {
-                        var textNodes = _utils2.default.loop($childNodes, function ($child) {
-                            if ($child.nodeType === 1) {
-                                var newLoop = getTextNodes($child);
-                                return newLoop;
-                            }
+                if ($child.nodeType === 1) {
+                    var child = new Model($child);
+                    child.parent = _this.model;
 
-                            return _utils2.default.getTextNodes($child, function ($textNode) {
-                                var textNode = new _textNode2.default($textNode);
-                                return textNode;
-                            });
-                        });
-                        res = res.concat(textNodes);
-                    });
-                })($template);
-
-                return res;
+                    if (!_this.lastChild) {
+                        _this.firstChild = child;
+                        _this.model.child = child;
+                    } else {
+                        _this.lastChild.next = child;
+                        child.prev = _this.lastChild;
+                    }
+                    _this.lastChild = child;
+                }
             });
         });
 
-        console.log(this.textNodes);
+        this.template = _utils2.default.getTemplateNode($node);
 
         return this.model;
     }
@@ -650,6 +660,12 @@ var Model = function () {
             this.$node.addEventListener(event, function (e) {
                 return cb.apply(_this4.model, [e]);
             }, useCapture);
+        }
+    }, {
+        key: 'render',
+        value: function render(template, data) {
+            console.log(template);
+            // let template = document.createRange().createContextualFragment(template);
         }
     }, {
         key: 'emit',
@@ -745,9 +761,6 @@ var Model = function () {
             this.events[name].push({ fn: fn, bubbles: bubbles });
         }
     }, {
-        key: 'render',
-        value: function render() {}
-    }, {
         key: 'updateStyles',
         value: function updateStyles() {
             var _this5 = this;
@@ -783,77 +796,37 @@ module.exports = exports['default'];
 
 /***/ }),
 
-/***/ "./src/textNode.js":
-/*!*************************!*\
-  !*** ./src/textNode.js ***!
-  \*************************/
+/***/ "./src/observe.js":
+/*!************************!*\
+  !*** ./src/observe.js ***!
+  \************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
+module.exports = function (object, watchers) {
+	var handler = {
+		get: function get(target, property, receiver) {
+			try {
+				return new Proxy(target[property], handler);
+			} catch (err) {
+				return Reflect.get(target, property, receiver);
+			}
+		},
+		defineProperty: function defineProperty(target, property, descriptor) {
+			console.log(target, property, descriptor);
+			return Reflect.defineProperty(target, property, descriptor);
+		},
+		deleteProperty: function deleteProperty(target, property) {
+			console.log(target, property);
+			return Reflect.deleteProperty(target, property);
+		}
+	};
 
-var _utils = __webpack_require__(/*! ./utils */ "./src/utils.js");
-
-var _utils2 = _interopRequireDefault(_utils);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var _class = function _class($textNode) {
-  _classCallCheck(this, _class);
-
-  // this.data = {
-  //   some: {
-  //     thing: 'this is useful',
-  //     awesome: 'this is awesome'
-  //   }
-  // };
-
-  // var text = {};
-
-  // const ctx = this;
-  // this.model = {};
-  // this.content = $textNode.content || $textNode.nodeValue;
-  // this.$node = $textNode;
-
-  // var vars = this.content.match(/{{{?(#[a-z ]+ )?[a-z ]+.[a-z ]*}?}}/g);
-
-  // if (vars) {
-  //   this.model.vars = vars.map((item) => {return item.replace(/{{|}}/g, '')});
-  // }
-
-  // if (this.model.vars) {
-  //   this.model.vars.forEach((item, index, array) => {
-  //     var ref = item.trim();
-  //     console.log(ref)
-  //     var res = utils.stringRef(ref, this.data);
-  //     var replaceStr = `{{${item}}}`;
-
-  //     console.log(res)
-
-  //     if (res) {
-  //       this.content = this.content.replace(`{{${item}}}`, res);
-  //     } else {
-  //       this.content = this.content.replace(`{{${item}}}`, '');
-  //     }
-
-  //     if (index === array.length - 1) {
-  //       this.$node.nodeValue = this.content;
-  //     }
-  //   })
-  // }
-
-  return $textNode;
+	return new Proxy(object, handler);
 };
-
-exports.default = _class;
-module.exports = exports['default'];
 
 /***/ }),
 
@@ -876,10 +849,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 var _model = __webpack_require__(/*! ./model */ "./src/model.js");
 
 var _model2 = _interopRequireDefault(_model);
-
-var _textNode = __webpack_require__(/*! ./textNode */ "./src/textNode.js");
-
-var _textNode2 = _interopRequireDefault(_textNode);
 
 var _global = __webpack_require__(/*! ./global */ "./src/global.js");
 
@@ -981,45 +950,7 @@ exports.default = {
         }
         return result;
     },
-    getAttributes: function getAttributes(attribute, root, model) {
-        var attrName = this.dashToCamelCase(attribute.nodeName);
-        var $attrValue = attribute.nodeValue;
-
-        if (!root[attrName] && attrName !== 'id' && attrName !== 'for') {
-            root[attrName] = $attrValue;
-
-            Object.defineProperty(model, attrName, {
-                get: function get() {
-                    return root[attrName];
-                },
-                set: function set(val) {
-                    if (root[attrName] !== val) {
-                        root[attrName] = val;
-
-                        ;utils.debounce(function ($node) {
-                            $node.setAttribute(utils.camelCaseToDash(attrName), root[attrName]);
-                        })($node);
-                    }
-                }
-            });
-        }
-    },
-    getChildNodes: function getChildNodes($child, root, model) {
-        if ($child.nodeType === 1) {
-            var child = new _model2.default($child, _global2.default.plugins);
-            child.parent = model;
-
-            if (!root.lastChild) {
-                root.firstChild = child;
-                model.child = child;
-            } else {
-                root.lastChild.next = child;
-                child.prev = root.lastChild;
-            }
-            root.lastChild = child;
-        }
-    },
-    getTextNodes: function getTextNodes($child, cb) {
+    getTextNode: function getTextNode($child, cb) {
         if ($child.nodeType === 3) {
             if ($child.nodeValue.trim().length > 0) {
                 return cb($child);
@@ -1040,100 +971,6 @@ exports.default = {
         }, object);
     }
 };
-
-// var textNodes = (function getTemplateNodes ($template) {
-//     if ($template.childNodes.length > 0) {
-//         return utils.loop($template.childNodes, ($item) => {
-//             if ($item.nodeType === 3) {
-//                 return $item
-//             }
-//             return getTemplateNodes($item)[0]
-//         })
-//     }
-// })($template);
-
-// for (let i=0; i < textNodes.length; i++) {
-//     var textNode = textNodes[i];
-
-//     var names = textNode.nodeValue.split(/{{|}}/g).filter((item) => {
-//         return item.trim() !== '';
-//     });
-
-//     for (let j=0; j < names.length; j++) {
-//         var name = names[j]
-//         if (!template[name]) {
-//             template[name] = [];
-//         }
-
-//         template[name].push(textNode)
-//     }
-// }
-
-// var names = textNode.nodeValue.split(/{{|}}/g).filter((item) => {
-//     return item.trim() !== '';
-// });
-
-//     var data = {};
-//     var temp = ['a', 'b', 'c', 'd'];
-
-//     Object.defineProperty(data, 'items', {
-//         get: () => {
-//             return temp;
-//         },
-//         set: (val) => {
-//             temp = val;
-//         }
-//     });
-
-//     Object.defineProperty(data.items, 'push', {
-//         configurable: false,
-//         enumerable: false, // hide from for...in
-//         writable: false,
-//         value: function (val) {
-//             for (var i = 0, n = this.length, l = arguments.length; i < l; i++, n++) {   
-//                 console.log(this, n, this[n] = val)       
-//             }
-//             return n;
-//         }
-//     });
-
-//     data.items.push('f');
-
-//     utils.check($node.getAttribute('for'), (string) => {
-//         let args = string.split('in').map((item) => {return item.trim()});
-//         let array = data[args[1]];
-//         let key = args[0];
-
-//         if (utils.check(array)) {
-//             utils.loop(array, (item) => {
-//                 (function render (node) {
-//                     if (utils.check(node.parent)) {
-//                         var $clone = $template.cloneNode(true);
-
-//                         (function getTemplateNodes ($template) {
-//                             if ($template.childNodes.length > 0) {
-//                                 return utils.loop($template.childNodes, ($item) => {
-//                                     if ($item.nodeType === 3) {
-//                                         $item.textContent = $item.textContent.replace(`{{${key}}}`, item);
-//                                         return $item;
-//                                     }
-//                                     return getTemplateNodes($item)[0]
-//                                 })
-//                             }
-//                         })($clone);
-
-//                         node.parent.append($clone);
-//                     } else {
-//                         window.requestAnimationFrame( () => render(node));
-//                     }
-//                 })(this);
-//             });
-//         }
-//     });
-// }));
-
-// utils.check(global.plugins, (plugins) => utils.loop(plugins, (Plugin) => new Plugin(this.model, $node)));
-
 module.exports = exports['default'];
 
 /***/ })

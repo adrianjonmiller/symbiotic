@@ -1,6 +1,9 @@
+'use strict';
+
 import Model from './model';
 import utils from './utils';
 import global from './global';
+import onChange from './observe';
 
 function getScope (el) {
     if (el === undefined) {
@@ -16,9 +19,10 @@ function getScope (el) {
 }
 
 export default class Symbiote {
-    constructor (methods, plugins) {
-        global.methods = methods;
-        global.plugins = plugins;
+    constructor (config) {
+        global.data = config.data || {};
+        global.methods = config.methods || {};
+        global.plugins = config.plugins || [];
     }
 
     attach (el) {
@@ -32,9 +36,6 @@ export default class Symbiote {
             }
         })($scope);
 
-
-        utils.head = this.head;
-
         ;((cb) => {
             if (document.readyState !== 'loading') {
                 cb();
@@ -45,7 +46,7 @@ export default class Symbiote {
             }
         })(() => {
             let t0 = performance.now();
-            this.vnom = new Model($scope)
+            this.vnom = new Model($scope, global.data);
 
             this.vnom.on('!nodeAdded', (payload) => {
                 this.init(payload.node, payload.methods);
@@ -54,13 +55,17 @@ export default class Symbiote {
             this.init(this.vnom);
 
             let t1 = performance.now();
-            console.log('JSI attached in ' + (t1 - t0) + ' milliseconds.');
+            console.log('Symbiote attached in ' + (t1 - t0) + ' milliseconds.');
         });
     }
 
     init (vnom, methods) {
         methods = methods || global.methods;
-        var result = [];
+
+        if (typeof methods === 'function') {
+            methods.apply(vnom);
+            return
+        }
 
         for (let method in methods) {
             let attribute = '';
@@ -89,7 +94,6 @@ export default class Symbiote {
 
                     if (vnom.methods[method] === undefined) {
                         vnom.methods[method] = methods[method].bind(vnom);
-
                     }
                 }
             }

@@ -1,9 +1,29 @@
+'use strict';
+/** 
+ * TODO:
+ * [ ]: Apply plugins directly to model
+ * -- [ ]: At append time
+ * -- [ ]: With bound method
+ * [ ]: Apply data directly to model
+ * -- [ ]: When appended
+ * -- [ ]: With a bound method
+ * [ ]: this.render function
+ * -- [ ]: Accepts a string
+ * -- [ ]: Accepts a dom node
+ * -- 
+ * [ ]: Uses a <template> if it exists
+ * [ ]: make a @this method points to the root element ex: '@this': function () {
+ *  console.log(this) <--- the root element of the append
+ * }
+*/
+
 import utils from './utils';
 import global from './global';
-import TextNodes from './textNode';
+import observe from './observe';
 
 export default class Model {
-    constructor ($node) {
+    constructor ($node, data) {    
+        data = global.data || data;
         this.$styleNode = utils.createStyleNode();
         this.events = {};
         this.style = {};
@@ -17,11 +37,13 @@ export default class Model {
         this.show = true;
         this.textNodes = [];
 
+
         if (this.id !== $node.getAttribute('id')) {
             $node.setAttribute('id', this.id);
         }
 
         this.model = {
+            data: observe(data, this.watchers),
             $node: $node,
             $event: this.$event.bind(this),
             textNodes: this.textNodes,
@@ -30,7 +52,8 @@ export default class Model {
             append: this.append.bind(this),
             prepend: this.prepend.bind(this),
             find: this.find.bind(this),
-            findParent: this.findParent.bind(this)
+            findParent: this.findParent.bind(this),
+            render: this.render.bind(this)
         };
 
         global.vdom[this.id] = {
@@ -122,38 +145,48 @@ export default class Model {
             }
         });
 
-        var data = {
-            items: [1, 2, 3, 4]
-        }
 
-        utils.check($node.attributes, (attributes) => utils.loop(attributes, (attribute) => utils.getAttributes(attribute, this, this.model)));
-        utils.check($node.childNodes, (children) => utils.loop(children, ($child) => utils.getChildNodes($child, this, this.model)));
-        this.textNodes = utils.check($node, ($node) => utils.getTemplateNode($node, ($template) => {
-            var res = [];
-            (function getTextNodes ($node) {     
-                return utils.check($node.childNodes, ($childNodes) => {
-                    var textNodes = utils.loop($childNodes, ($child => {
-                        if ($child.nodeType === 1) {
-                            var newLoop = getTextNodes($child);
-                            return newLoop;
-                        }
+        utils.check($node.attributes, (attributes) => utils.loop(attributes, (attribute) => {
+            let attrName = utils.dashToCamelCase(attribute.nodeName);
+            let $attrValue = attribute.nodeValue;
+    
+            if (!this[attrName] && attrName !== 'id' && attrName !== 'for') {
+                this[attrName] = $attrValue;
 
-                        return utils.getTextNodes($child, ($textNode) => {
-                            var textNode = new TextNodes($textNode)
-                            return textNode;
-                        });
+            Object.defineProperty(this.model, attrName, {
+                get: () => {
+                    return this[attrName]
+                },
+                set: (val) => {
+                    if (this[attrName] !== val) {
+                        this[attrName] = val;
 
-                    }));
-                    res = res.concat(textNodes);
-                });
-            })($template);
-
-            return res;
+                    ;(utils.debounce(($node) => {
+                        $node.setAttribute(utils.camelCaseToDash(attrName), root[attrName]);
+                    }))($node);
+                    }
+                }
+            });
+            }
         }));
-        
-        
 
-        console.log(this.textNodes);
+        utils.check($node.childNodes, (children) => utils.loop(children, ($child) => {
+            if ($child.nodeType === 1) {
+                let child = new Model($child);
+                child.parent = this.model;
+    
+                if (!this.lastChild) {
+                    this.firstChild = child;
+                    this.model.child = child;
+                } else {
+                    this.lastChild.next = child;
+                    child.prev = this.lastChild;
+                }
+                this.lastChild = child;
+            }
+        }));
+
+        this.template = utils.getTemplateNode($node);
 
         return this.model;
     }
@@ -203,6 +236,11 @@ export default class Model {
     $event(event, cb, useCapture) {
         useCapture = useCapture || false;
         this.$node.addEventListener(event, (e) => cb.apply(this.model, [e]), useCapture)
+    }
+
+    render (template, data) {
+        console.log(template)
+        // let template = document.createRange().createContextualFragment(template);
     }
 
     emit(event, payload) {
@@ -294,10 +332,6 @@ export default class Model {
         }
 
         this.events[name].push( {fn: fn, bubbles: bubbles} );
-    }
-
-    render () {
-
     }
 
     updateStyles () {

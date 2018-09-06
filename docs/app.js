@@ -3,51 +3,27 @@ import Button from './button.html';
 import Plugin from 'Plugins/test'
 
 new Symbiote({
-    'body': function () {
-        this.style = {
-            padding: '0 2rem',
-            margin: '0 auto',
-            maxWidth: '1080px',
-            fontFamily: 'Helvetica, sans-serif'
-        };
+    methods: {
+        'body': function () {   
+            this.data.something.test = 'success1'
+        },
+        '#todo': function () {
+            this.data.something.test = 'success2'
+        },
+        '#test': function () {
+            var div = document.createElement('div');
+            this.append(div, function () {
+                console.log(this)
+            })
 
-        var frag = document.createRange().createContextualFragment(Button);
-
-        var h1 = document.createElement('h1');
-        this.append(h1, {
-            'h1': function () {
-                this.$node.innerHTML = 'Symbiote.js'
-            }
-        });
-
-        this.append(frag.firstElementChild, {
-            'button': function () {
-                this.$event('click', function () {
-                    console.log(this)
-                })
-            }
-        });
-
-        var div = document.createElement('div');
-        var p = document.createElement('p');
-        var input = document.createElement('input');
-        var divNode = this.append(div);
-
-        divNode.append(p, {
-            'p': function () {
-                this.$node.innerHTML = 'Copy this to install Symbiote.js'
-            }
-        });
-
-        divNode.append(input, {
-            'input': function () {
-                this.$node.setAttribute('value', 'npm install https://github.com/adrianjonmiller/symbiote')
-            }
-        });
+            this.render('<div class="something"></div>');
+        }
     },
-    '#todo': function () {
-        console.log(this)
-    },
-    '.test': function () {
+    plugins: [Plugin],
+    data: {
+        name: 'some data',
+        something: {
+            test: 'awesome'
+        }
     }
-}, [Plugin]).attach();
+}).attach();
