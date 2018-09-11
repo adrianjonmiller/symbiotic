@@ -120,5 +120,80 @@ export default {
                 return ''
             }
         }, object);
+    },
+    init (vnom, methods) {
+        methods = methods || global.methods;
+
+        if (typeof methods === 'function') {
+            methods.apply(vnom);
+            return
+        }
+
+        for (let method in methods) {
+            let attribute = '';
+            let attributeValue = '';
+
+            switch (method.charAt(0)) {
+                case '.':
+                    attribute = 'class';
+                    attributeValue = method.substring(1);
+                    break;
+                case '#':
+                    attribute = 'id';
+                    attributeValue = method.substring(1);
+                    break;
+                default:
+                    attribute = 'tagName'
+                    attributeValue = method;
+            }
+
+            if (vnom[attribute]) {
+                if (vnom[attribute].split(' ').indexOf(attributeValue) > -1) {
+
+                    if (!vnom.methods) {
+                        vnom.methods = {};
+                    }
+
+                    if (vnom.methods[method] === undefined) {
+                        vnom.methods[method] = methods[method].bind(vnom);
+                    }
+                }
+            }
+        }
+
+        if (vnom.child) {
+            this.init(vnom.child, methods)
+        }
+
+        if (vnom.next) {
+            this.init(vnom.next, methods)
+        }
+
+        for (let method in vnom.methods) {
+            try {
+                (vnom.methods[method])();
+            } catch (error) {
+                console.error(error.stack);
+            }
+        }
+    },
+    getScope (el) {
+        if (el === undefined) {
+            return document.body || document.querySelector('body');
+        }
+    
+        switch (typeof el) {
+            case 'string':
+                return document.querySelector(el);
+            case 'object':
+                return el;            
+        }
+    },
+    findHead ($node) {     
+        if ($node.tagName === 'HTML') {
+            return $node.querySelector('head')
+        } else {
+            return this.findHead($node.parentNode);
+        }
     }
 };

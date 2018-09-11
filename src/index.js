@@ -3,20 +3,6 @@
 import Model from './model';
 import utils from './utils';
 import global from './global';
-import onChange from './observe';
-
-function getScope (el) {
-    if (el === undefined) {
-        return document.body || document.querySelector('body');
-    }
-
-    switch (typeof el) {
-        case 'string':
-            return document.querySelector(el);
-        case 'object':
-            return el;            
-    }
-}
 
 export default class Symbiote {
     constructor (config) {
@@ -26,15 +12,8 @@ export default class Symbiote {
     }
 
     attach (el) {
-        const $scope = getScope(el);
-
-        global.head = (function findHead ($node) {     
-            if ($node.tagName === 'HTML') {
-                return $node.querySelector('head')
-            } else {
-                return findHead($node.parentNode);
-            }
-        })($scope);
+        const $scope = utils.getScope(el);
+        global.head = utils.findHead($scope);
 
         ;((cb) => {
             if (document.readyState !== 'loading') {
@@ -48,72 +27,11 @@ export default class Symbiote {
             let t0 = performance.now();
             this.vnom = new Model($scope, global.data);
 
-            this.vnom.on('!nodeAdded', (payload) => {
-                this.init(payload.node, payload.methods);
-            });
-
-            this.init(this.vnom);
+            utils.init(this.vnom);
 
             let t1 = performance.now();
             console.log('Symbiote attached in ' + (t1 - t0) + ' milliseconds.');
         });
-    }
-
-    init (vnom, methods) {
-        methods = methods || global.methods;
-
-        if (typeof methods === 'function') {
-            methods.apply(vnom);
-            return
-        }
-
-        for (let method in methods) {
-            let attribute = '';
-            let attributeValue = '';
-
-            switch (method.charAt(0)) {
-                case '.':
-                    attribute = 'class';
-                    attributeValue = method.substring(1);
-                    break;
-                case '#':
-                    attribute = 'id';
-                    attributeValue = method.substring(1);
-                    break;
-                default:
-                    attribute = 'tagName'
-                    attributeValue = method;
-            }
-
-            if (vnom[attribute]) {
-                if (vnom[attribute].split(' ').indexOf(attributeValue) > -1) {
-
-                    if (!vnom.methods) {
-                        vnom.methods = {};
-                    }
-
-                    if (vnom.methods[method] === undefined) {
-                        vnom.methods[method] = methods[method].bind(vnom);
-                    }
-                }
-            }
-        }
-
-        if (vnom.child) {
-            this.init(vnom.child, methods)
-        }
-
-        if (vnom.next) {
-            this.init(vnom.next, methods)
-        }
-
-        for (let method in vnom.methods) {
-            try {
-                (vnom.methods[method])();
-            } catch (error) {
-                console.error(error.stack);
-            }
-        }
     }
 }
 

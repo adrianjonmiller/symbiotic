@@ -134,8 +134,6 @@ new _index2.default({
             });
         },
         '#todo': function todo() {
-            var _this = this;
-
             var data = [{
                 name: 'Bill',
                 sex: "Male",
@@ -146,13 +144,19 @@ new _index2.default({
                 shower: 'No'
             }];
 
+            var item = {
+                name: 'Bill',
+                sex: "Male",
+                shower: 'No'
+            };
+
             this.plugins([_plugin2.default]);
 
-            data.forEach(function (item) {
-                _this.render({
+            for (var i = 0; i < 1000; i++) {
+                this.render({
                     data: item
                 });
-            });
+            }
 
             this.extend({
                 data: 'data'
@@ -6273,7 +6277,6 @@ var Data = function () {
   function Data(data) {
     _classCallCheck(this, Data);
 
-    this.watchers = [];
     this.data = data;
   }
 
@@ -6307,11 +6310,6 @@ var Data = function () {
           }
         });
       }
-    }
-  }, {
-    key: 'addWatcher',
-    value: function addWatcher(watcher, self) {
-      this.watchers.push(watcher.bind(self));
     }
   }]);
 
@@ -6361,8 +6359,6 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
 var _model = __webpack_require__(/*! ./model */ "./src/model.js");
 
 var _model2 = _interopRequireDefault(_model);
@@ -6375,26 +6371,9 @@ var _global = __webpack_require__(/*! ./global */ "./src/global.js");
 
 var _global2 = _interopRequireDefault(_global);
 
-var _observe = __webpack_require__(/*! ./observe */ "./src/observe.js");
-
-var _observe2 = _interopRequireDefault(_observe);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function getScope(el) {
-    if (el === undefined) {
-        return document.body || document.querySelector('body');
-    }
-
-    switch (typeof el === 'undefined' ? 'undefined' : _typeof(el)) {
-        case 'string':
-            return document.querySelector(el);
-        case 'object':
-            return el;
-    }
-}
 
 var Symbiote = function () {
     function Symbiote(config) {
@@ -6410,15 +6389,8 @@ var Symbiote = function () {
         value: function attach(el) {
             var _this = this;
 
-            var $scope = getScope(el);
-
-            _global2.default.head = function findHead($node) {
-                if ($node.tagName === 'HTML') {
-                    return $node.querySelector('head');
-                } else {
-                    return findHead($node.parentNode);
-                }
-            }($scope);
+            var $scope = _utils2.default.getScope(el);
+            _global2.default.head = _utils2.default.findHead($scope);
 
             ;(function (cb) {
                 if (document.readyState !== 'loading') {
@@ -6432,73 +6404,11 @@ var Symbiote = function () {
                 var t0 = performance.now();
                 _this.vnom = new _model2.default($scope, _global2.default.data);
 
-                _this.vnom.on('!nodeAdded', function (payload) {
-                    _this.init(payload.node, payload.methods);
-                });
-
-                _this.init(_this.vnom);
+                _utils2.default.init(_this.vnom);
 
                 var t1 = performance.now();
                 console.log('Symbiote attached in ' + (t1 - t0) + ' milliseconds.');
             });
-        }
-    }, {
-        key: 'init',
-        value: function init(vnom, methods) {
-            methods = methods || _global2.default.methods;
-
-            if (typeof methods === 'function') {
-                methods.apply(vnom);
-                return;
-            }
-
-            for (var method in methods) {
-                var attribute = '';
-                var attributeValue = '';
-
-                switch (method.charAt(0)) {
-                    case '.':
-                        attribute = 'class';
-                        attributeValue = method.substring(1);
-                        break;
-                    case '#':
-                        attribute = 'id';
-                        attributeValue = method.substring(1);
-                        break;
-                    default:
-                        attribute = 'tagName';
-                        attributeValue = method;
-                }
-
-                if (vnom[attribute]) {
-                    if (vnom[attribute].split(' ').indexOf(attributeValue) > -1) {
-
-                        if (!vnom.methods) {
-                            vnom.methods = {};
-                        }
-
-                        if (vnom.methods[method] === undefined) {
-                            vnom.methods[method] = methods[method].bind(vnom);
-                        }
-                    }
-                }
-            }
-
-            if (vnom.child) {
-                this.init(vnom.child, methods);
-            }
-
-            if (vnom.next) {
-                this.init(vnom.next, methods);
-            }
-
-            for (var _method in vnom.methods) {
-                try {
-                    vnom.methods[_method]();
-                } catch (error) {
-                    console.error(error.stack);
-                }
-            }
         }
     }]);
 
@@ -6588,6 +6498,8 @@ var Model = function () {
         this.id = $node.getAttribute('id') || _utils2.default.uid();
         this.show = true;
         this.textNodes = [];
+        this.width = $node.offsetWidth;
+        this.height = $node.offsetHeight;
 
         this.model = {
             $node: $node,
@@ -6774,7 +6686,7 @@ var Model = function () {
 
             _utils2.default.debounce(function () {
                 _this2.$node.appendChild(node.$node);
-                _this2.emit('!nodeAdded', { node: node, methods: methods });
+                _utils2.default.init(node, methods);
             })();
 
             return node;
@@ -6796,7 +6708,7 @@ var Model = function () {
 
             _utils2.default.debounce(function () {
                 _this3.$node.prepend(node.$node);
-                _this3.emit('!nodeAdded', { node: node, methods: methods });
+                _utils2.default.init(node, methods);
             })();
 
             return node;
@@ -7198,6 +7110,81 @@ exports.default = {
                 return '';
             }
         }, object);
+    },
+    init: function init(vnom, methods) {
+        methods = methods || _global2.default.methods;
+
+        if (typeof methods === 'function') {
+            methods.apply(vnom);
+            return;
+        }
+
+        for (var method in methods) {
+            var attribute = '';
+            var attributeValue = '';
+
+            switch (method.charAt(0)) {
+                case '.':
+                    attribute = 'class';
+                    attributeValue = method.substring(1);
+                    break;
+                case '#':
+                    attribute = 'id';
+                    attributeValue = method.substring(1);
+                    break;
+                default:
+                    attribute = 'tagName';
+                    attributeValue = method;
+            }
+
+            if (vnom[attribute]) {
+                if (vnom[attribute].split(' ').indexOf(attributeValue) > -1) {
+
+                    if (!vnom.methods) {
+                        vnom.methods = {};
+                    }
+
+                    if (vnom.methods[method] === undefined) {
+                        vnom.methods[method] = methods[method].bind(vnom);
+                    }
+                }
+            }
+        }
+
+        if (vnom.child) {
+            this.init(vnom.child, methods);
+        }
+
+        if (vnom.next) {
+            this.init(vnom.next, methods);
+        }
+
+        for (var _method in vnom.methods) {
+            try {
+                vnom.methods[_method]();
+            } catch (error) {
+                console.error(error.stack);
+            }
+        }
+    },
+    getScope: function getScope(el) {
+        if (el === undefined) {
+            return document.body || document.querySelector('body');
+        }
+
+        switch (typeof el === 'undefined' ? 'undefined' : _typeof(el)) {
+            case 'string':
+                return document.querySelector(el);
+            case 'object':
+                return el;
+        }
+    },
+    findHead: function findHead($node) {
+        if ($node.tagName === 'HTML') {
+            return $node.querySelector('head');
+        } else {
+            return this.findHead($node.parentNode);
+        }
     }
 };
 module.exports = exports['default'];

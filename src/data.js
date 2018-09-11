@@ -1,6 +1,5 @@
 export default class Data {
   constructor (data) {
-    this.watchers = [];
     this.data = data;
   }
 
@@ -31,9 +30,5 @@ export default class Data {
         }
       });
     }
-  }
-
-  addWatcher (watcher, self) {
-    this.watchers.push(watcher.bind(self));
   }
 }

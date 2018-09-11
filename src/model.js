@@ -35,6 +35,8 @@ export default class Model {
         this.id = $node.getAttribute('id') || utils.uid();
         this.show = true;
         this.textNodes = [];
+        this.width = $node.offsetWidth;
+        this.height = $node.offsetHeight;
 
         this.model = {
             $node: $node,
@@ -149,7 +151,6 @@ export default class Model {
             }
         });
 
-
         utils.check($node.attributes, (attributes) => utils.loop(attributes, (attribute) => {
             let attrName = utils.dashToCamelCase(attribute.nodeName);
             let $attrValue = attribute.nodeValue;
@@ -214,7 +215,7 @@ export default class Model {
 
         (utils.debounce(() => {
             this.$node.appendChild(node.$node);
-            this.emit('!nodeAdded', { node: node, methods: methods });
+            utils.init(node, methods);
         }))();
 
         return node;
@@ -233,7 +234,7 @@ export default class Model {
 
         (utils.debounce(() => {
             this.$node.prepend(node.$node);
-            this.emit('!nodeAdded', { node: node, methods: methods });
+            utils.init(node, methods);
         }))();
 
         return node;
@@ -423,6 +424,5 @@ export default class Model {
                 }
             }))
         })(this.model, data)
-        
     }
 }

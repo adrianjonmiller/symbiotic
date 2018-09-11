@@ -25,13 +25,19 @@ new Symbiote({
                 }
             ]
 
+            var item = {
+                name: 'Bill',
+                sex: "Male",
+                shower: 'No'
+            };
+
             this.plugins([Plugin2]);
 
-            data.forEach((item) => {
+            for (let i =0; i < 1000; i++) {
                 this.render({
                     data: item
                 });
-            });
+            }
 
             this.extend({
                 data: 'data'
