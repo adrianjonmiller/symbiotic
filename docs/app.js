@@ -33,32 +33,22 @@ new Symbiote({
 
             this.plugins([Plugin2]);
 
-            for (let i =0; i < 1000; i++) {
-                this.render({
-                    data: item
-                });
-            }
-
             this.extend({
                 data: 'data'
             })
         },
+        '.js-item': function () {
+
+        },
         '#test': function () {
-            var div = document.createElement('div');
-            this.append(div, function () {
-                console.log(this)
-            })
+            this.success = [
+                    {item: 'soemthing'},
+                    {item: 'something 2'}
+                ];
 
-            var nodes = this.render({
-                template: '<div class="">{{   something.is}}</div>',
-                data: {
-                    something: {
-                        is: 'awesome'
-                    }
-                } 
-            });
-
-            console.log(nodes)
+            // this.success[1].item = 'something 3';
+            this.success.push({item: 'something 4'});
+            this.success.push({item: 'something 5'});
         }
     },
     plugins: [Plugin],

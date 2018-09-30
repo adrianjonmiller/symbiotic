@@ -6,6 +6,7 @@ import global from './global';
 export default {
     id: 0,
     prefix: 'vnom-',
+    mustacheRegex: /\$\{\s?(\w.+)\s?\}/g,
     camelCaseToDash: function (myStr) {
         return myStr.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
     },

@@ -11,14 +11,16 @@
             <aside>
                 <ul class="sidebar">
                     <template id="todo">
-                        <li>{{name}} {{sex.else}} {{shower}}</a></li>
+                        <li>{{name}} {{else}} {{shower}}</a></li>
                     </template>
                 </ul>
             </aside>
         </div>
-        <div id="test">
-
-        </div>
+        <ul>
+            <template id="test" for="item in success">
+                <li class="js-item"><a href="" data="item">${item.item}</a></li>
+            </template>     
+        </ul>
         <script src="./main.js"></script>
     </body>
 </html>

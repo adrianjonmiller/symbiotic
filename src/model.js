@@ -1,25 +1,10 @@
 'use strict';
-/** 
- * TODO:
- * [X]: Apply plugins directly to model
- * -- [X]: At append time
- * -- [X]: With bound method
- * [ ]: Apply data directly to model
- * -- [ ]: When appended
- * -- [X]: With a bound method
- * [X]: this.render function
- * -- [X]: Accepts a string
- * [X]: Uses a <template> if it exists
- * [X]: make a single function method points to the root element ex: '@this': function () {
- *  console.log(this) <--- the root element of the append
- * }
-*/
 
 import utils from './utils';
 import global from './global';
-import observe from './observe';
+import Observer from './observe';
 import Data from './data';
-import { throwError } from 'rxjs';
+import TextNode from './textNode';
 
 export default class Model {
     constructor ($node) {    
@@ -141,7 +126,7 @@ export default class Model {
 
         Object.defineProperty(this.model, 'style', {
             get: () => {
-                this.pdateStyles(this.style, this.$styleNode, this.id);
+                this.updateStyles(this.style, this.$styleNode, this.id);
                 return this.style;
             },
             set: (val) => {
@@ -175,7 +160,7 @@ export default class Model {
             }
         }));
 
-        utils.check($node.childNodes, (children) => utils.loop(children, ($child) => {
+        utils.check($node.childNodes, ($children) => utils.loop($children, ($child) => {
             if ($child.nodeType === 1) {
                 let child = new Model($child);
                 child.parent = this.model;
@@ -189,7 +174,29 @@ export default class Model {
                 }
                 this.lastChild = child;
             }
+
+            utils.getTextNode($child, ($textNode) => {
+                this.textNodes.push(new TextNode($textNode, this.model));
+            });
         }));
+
+        if ($node.getAttribute('for')) {
+            var list = $node.getAttribute('for').split(' in ');
+            var key = list[0];
+            var data = list[1];
+            this.cloned = {};
+
+            Object.defineProperty(this.model, data, {
+                set: (vals) => {
+                    this[data] = vals;
+                    this.updateTextNodes(vals, key)
+                },
+                get: () => {
+                    this.updateTextNodes(this[data], key)
+                    return this[data]
+                }
+            })
+        }
 
         if (global.plugins !== null) {
             this.plugins(global.plugins);
@@ -198,7 +205,7 @@ export default class Model {
         return this.model;
     }
 
-    append($node, methods) {
+    append ($node, methods) {
         let node = new Model($node);
         node.parent = this.model;
 
@@ -221,62 +228,12 @@ export default class Model {
         return node;
     }
 
-    prepend($node, methods) {  
-        let node = new Model($node);
-        node.parent = this.model;
-
-        if (this.firstChild) {
-            node.next = this.firstChild;
-            this.firstChild.prev = node;
-        }
-
-        this.firstChild = node;
-
-        (utils.debounce(() => {
-            this.$node.prepend(node.$node);
-            utils.init(node, methods);
-        }))();
-
-        return node;
-    }
-
-    $event(event, cb, useCapture) {
+    $event (event, cb, useCapture) {
         useCapture = useCapture || false;
         this.$node.addEventListener(event, (e) => cb.apply(this.model, [e]), useCapture)
     }
 
-    render (args) {
-        if (!args.template && this.tagName !== 'template') {
-            return
-        }
-        let template = args.template || this.template;
-        let data = args.data || {};
-        let methods = args.methods || global.methods;
-        let refs = template.match(/{{{?(#[a-z ]+ )?[a-z ]+.[a-z ]*}?}}/g);
-        let range = document.createRange();
-
-        utils.check(refs, (refs) => utils.loop(refs, (ref) => {
-            var key = ref.replace(/{{|}}/g, '').trim();
-            var value = utils.stringRef(key, data);
-
-            template = template.replace(ref, value);
-        }))
-
-        let frag = range.createContextualFragment(template);
-
-        return utils.check(frag.children, ($children) => utils.loop($children, ($child) => {
-            if (this.tagName === 'template') {
-                if (this.parent !== undefined) {
-                    return this.parent.append($child, methods)
-                }
-            } else {
-                return this.append($child, methods);
-            }
-            
-        }))
-    }
-
-    emit(event, payload) {
+    emit (event, payload) {
         let bubbles = true;
         payload = payload || this.model;
 
@@ -298,7 +255,34 @@ export default class Model {
         }
     }
 
-    find(attrName, value, cb) {
+    extend (data) {
+        ; (function loop(model, data) {
+            utils.check(data, (data) => utils.loop(data, (value, key) => {
+                if (model[key] !== undefined) {
+                    throw 'Key on model cannot be redefined';
+                }
+
+                let Proxy = new Data(value);
+
+                if (typeof value === 'object') {
+                    model[key] = model[key] || {};
+                    loop(model[key], value)
+                } else {
+                    Object.defineProperty(model, key, {
+                        get: () => {
+                            return Proxy.get();
+                        },
+                        set: (val) => {
+                            Proxy.set(val)
+                        },
+                        configurable: true
+                    })
+                }
+            }))
+        })(this.model, data);
+    }
+
+    find (attrName, value, cb) {
         let result = [];
 
         attrName = utils.dashToCamelCase(attrName);
@@ -327,7 +311,7 @@ export default class Model {
         return result;
     }
 
-    findParent(attrName, value, cb) {
+    findParent (attrName, value, cb) {
         let result = [];
         attrName = utils.dashToCamelCase(attrName);
 
@@ -367,30 +351,7 @@ export default class Model {
         this.events[name].push( {fn: fn, bubbles: bubbles} );
     }
 
-    updateStyles () {
-        (utils.debounce(() => {
-            if (!utils.check(this.style)) {
-                this.$styleNode.innerHTML = ''
-                return
-            }
-    
-            var styleString = `#${this.id}{`;
-   
-            utils.loop(this.style, function (value, prop) {
-                styleString += `${utils.camelCaseToDash(prop)}:${value};`;
-            })
-    
-            styleString += '}';
-    
-            if (this.$styleNode.parentNode === null) {
-                global.head.appendChild(this.$styleNode);
-            }
-    
-            this.$styleNode.innerHTML = styleString;
-        }))();
-    }
-
-    plugins (Plugins) {
+    plugins(Plugins) {
         if (!Plugins.length > 0) {
             return null
         }
@@ -400,29 +361,104 @@ export default class Model {
         }));
     }
 
-    extend (data) {
-        (function loop (model, data) {
-            utils.check(data, (data) => utils.loop(data, (value, key) => {
-                if (model[key] !== undefined) {
-                    throw 'Key on model cannot be redefined';
+    prepend($node, methods) {
+        let node = new Model($node);
+        node.parent = this.model;
+
+        if (this.firstChild) {
+            node.next = this.firstChild;
+            this.firstChild.prev = node;
+        }
+
+        this.firstChild = node;
+
+        (utils.debounce(() => {
+            this.$node.prepend(node.$node);
+            utils.init(node, methods);
+        }))();
+
+        return node;
+    }
+
+    render(args) {
+        if (!args.template && this.tagName !== 'template') {
+            return
+        }
+
+        let template = args.template || this.template;
+        let data = args.data || {};
+        let methods = args.methods || global.methods;
+        let refs = template.match(/{{{?(#[a-z ]+ )?[a-z ]+.[a-z ]*}?}}/g);
+        let range = document.createRange();
+
+        utils.check(refs, (refs) => utils.loop(refs, (ref) => {
+            var key = ref.replace(/{{|}}/g, '').trim();
+            var value = utils.stringRef(key, data);
+
+            template = template.replace(ref, value);
+        }))
+
+        let frag = range.createContextualFragment(template);
+
+        return utils.check(frag.children, ($children) => utils.loop($children, ($child) => {
+            if (this.tagName === 'template') {
+                if (this.parent !== undefined) {
+                    return this.parent.append($child, methods)
+                }
+            } else {
+                return this.append($child, methods);
+            }
+
+        }));
+    }
+
+    updateStyles() {
+        (utils.debounce(() => {
+            if (!utils.check(this.style)) {
+                this.$styleNode.innerHTML = ''
+                return
+            }
+
+            var styleString = `#${this.id}{`;
+
+            utils.loop(this.style, function (value, prop) {
+                styleString += `${utils.camelCaseToDash(prop)}:${value};`;
+            })
+
+            styleString += '}';
+
+            if (this.$styleNode.parentNode === null) {
+                global.head.appendChild(this.$styleNode);
+            }
+
+            this.$styleNode.innerHTML = styleString;
+        }))();
+    }
+
+    updateTextNodes (vals, key) {
+        (utils.debounce(() => {
+            utils.loop(vals, (val, k) => {
+                if (this.cloned[k] === undefined) {
+                    let $clonedNode = this.$node.content.children[0].cloneNode(true);
+                    this.cloned[k] = this.parent.append($clonedNode);
                 }
 
-                let Proxy = new Data(value);
-                if (typeof value === 'object') {
-                    model[key] = model[key] || {};
-                    loop(model[key], value)
-                } else {
-                    Object.defineProperty(model, key, {
-                        get: () => {
-                            return Proxy.get();
-                        },
-                        set: (val) => {
-                            Proxy.set(val)
-                        },
-                        configurable: true
+                if (this.cloned[k].data && this.cloned[k].data === key) {
+                    this.cloned[k][key] = val
+
+                    this.cloned[k].textNodes.forEach((textNode) => {
+                        textNode.update();
                     })
                 }
-            }))
-        })(this.model, data)
+
+                this.cloned[k].find('data', key, (found) => {
+                    found[key] = val
+
+                    found.textNodes.forEach((textNode) => {
+                        textNode.update()
+                    })
+                })
+            })
+        }))();
     }
 }
