@@ -1,34 +1,36 @@
 export default class Data {
-  constructor (data) {
+  constructor (data, cb) {
+    this.method = null;
     this.data = data;
+    this.cb = cb;
+
+    if (typeof data === 'function') {
+      this.method = data
+      this.data = data()
+    }
   }
 
   get () {
-    if (typeof this.data === 'function') {
-      return this.data();
-    }
-
-    return this.data;
+    return this.data
   }
 
-  set (value) {
-    if (typeof this.data === 'function') {
-      this.data(value);
+  set (val) {
+    let newVal;
+    let oldVal = this.data;
+    let watcher = this.cb();
 
-      this.watchers.forEach((cb) => {
-        if (typeof cb === 'function') {
-          cb(value);
-        }
-      });
-    } else if (this.data !== value) {
-      let old = this.data;
+    if (this.method) {
+      newVal = this.method(val)
+    } else {
+      newVal = val
+    }
 
-      this.data = value;
-      this.watchers.forEach((cb) => {
-        if (typeof cb === 'function') {
-          cb(value, old);
-        }
-      });
+    if (newVal === oldVal) {
+      return
+    }
+
+    if (watcher) {
+      watcher(newVal, oldVal)
     }
   }
 }

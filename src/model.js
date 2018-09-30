@@ -22,6 +22,7 @@ export default class Model {
         this.textNodes = [];
         this.width = $node.offsetWidth;
         this.height = $node.offsetHeight;
+        this.watchers = {};
 
         this.model = {
             $node: $node,
@@ -35,7 +36,8 @@ export default class Model {
             findParent: this.findParent.bind(this),
             render: this.render.bind(this),
             plugins: this.plugins.bind(this),
-            extend: this.extend.bind(this)
+            extend: this.extend.bind(this),
+            watch: this.watch.bind(this)
         };
 
         if (this.id !== $node.getAttribute('id')) {
@@ -255,14 +257,21 @@ export default class Model {
         }
     }
 
+    watch (watchers) {
+        Object.assign(this.watchers, watchers);
+    }
+
     extend (data) {
+        const ctx = this
         ; (function loop(model, data) {
             utils.check(data, (data) => utils.loop(data, (value, key) => {
                 if (model[key] !== undefined) {
                     throw 'Key on model cannot be redefined';
                 }
 
-                let Proxy = new Data(value);
+                let Proxy = new Data(value, () => {
+                    return ctx.watchers[key] || null
+                });
 
                 if (typeof value === 'object') {
                     model[key] = model[key] || {};

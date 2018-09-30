@@ -144,6 +144,20 @@ new _index2.default({
                 shower: 'No'
             }];
 
+            this.extend({
+                name: 'Bill'
+            });
+
+            this.watch({
+                name: function name(newVal, oldVal) {
+                    console.log(newVal, oldVal);
+                }
+            });
+
+            this.name = 'test';
+
+            console.log(this.name);
+
             var item = {
                 name: 'Bill',
                 sex: "Male",
@@ -260,41 +274,43 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Data = function () {
-  function Data(data) {
+  function Data(data, cb) {
     _classCallCheck(this, Data);
 
+    this.method = null;
     this.data = data;
+    this.cb = cb;
+
+    if (typeof data === 'function') {
+      this.method = data;
+      this.data = data();
+    }
   }
 
   _createClass(Data, [{
     key: 'get',
     value: function get() {
-      if (typeof this.data === 'function') {
-        return this.data();
-      }
-
       return this.data;
     }
   }, {
     key: 'set',
-    value: function set(value) {
-      if (typeof this.data === 'function') {
-        this.data(value);
+    value: function set(val) {
+      var newVal = void 0;
+      var oldVal = this.data;
+      var watcher = this.cb();
 
-        this.watchers.forEach(function (cb) {
-          if (typeof cb === 'function') {
-            cb(value);
-          }
-        });
-      } else if (this.data !== value) {
-        var old = this.data;
+      if (this.method) {
+        newVal = this.method(val);
+      } else {
+        newVal = val;
+      }
 
-        this.data = value;
-        this.watchers.forEach(function (cb) {
-          if (typeof cb === 'function') {
-            cb(value, old);
-          }
-        });
+      if (newVal === oldVal) {
+        return;
+      }
+
+      if (watcher) {
+        watcher(newVal, oldVal);
       }
     }
   }]);
@@ -473,6 +489,7 @@ var Model = function () {
         this.textNodes = [];
         this.width = $node.offsetWidth;
         this.height = $node.offsetHeight;
+        this.watchers = {};
 
         this.model = {
             $node: $node,
@@ -486,7 +503,8 @@ var Model = function () {
             findParent: this.findParent.bind(this),
             render: this.render.bind(this),
             plugins: this.plugins.bind(this),
-            extend: this.extend.bind(this)
+            extend: this.extend.bind(this),
+            watch: this.watch.bind(this)
         };
 
         if (this.id !== $node.getAttribute('id')) {
@@ -720,16 +738,23 @@ var Model = function () {
             }
         }
     }, {
+        key: 'watch',
+        value: function watch(watchers) {
+            Object.assign(this.watchers, watchers);
+        }
+    }, {
         key: 'extend',
         value: function extend(data) {
-            ;(function loop(model, data) {
+            var ctx = this;(function loop(model, data) {
                 _utils2.default.check(data, function (data) {
                     return _utils2.default.loop(data, function (value, key) {
                         if (model[key] !== undefined) {
                             throw 'Key on model cannot be redefined';
                         }
 
-                        var Proxy = new _data2.default(value);
+                        var Proxy = new _data2.default(value, function () {
+                            return ctx.watchers[key] || null;
+                        });
 
                         if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object') {
                             model[key] = model[key] || {};

@@ -1,6 +1,6 @@
 {
-  "name": "symbiote",
-  "version": "1.0.0",
+  "name": "symbiotic",
+  "version": "0.1.1",
   "description": "Attaching functions to dom element",
   "main": "dist/main.js",
   "license": "MIT",

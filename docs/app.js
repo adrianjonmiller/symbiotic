@@ -25,6 +25,20 @@ new Symbiote({
                 }
             ]
 
+            this.extend({
+                name: 'Bill'
+            })
+
+            this.watch({
+                name: function (newVal, oldVal) {
+                    console.log(newVal, oldVal)
+                }
+            })
+
+            this.name = 'test'
+
+            console.log(this.name)
+
             var item = {
                 name: 'Bill',
                 sex: "Male",
