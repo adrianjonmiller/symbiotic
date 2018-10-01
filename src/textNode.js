@@ -6,8 +6,20 @@ export default class {
     this.originalContent = $node.textContent;
     this.keys = [];
     this.model = model;
+    this.data = {}
 
     this.replace((variable) => {
+      Object.defineProperty(model, variable, {
+        get: () => {
+          return this.data[variable]
+        },
+        set: (val) => {
+          this.data[variable] = val
+          ;(utils.debounce(() => {
+            this.update()
+          }))();
+        }
+      })
       this.keys.push(variable);
       return utils.stringRef(variable, model);
     })  

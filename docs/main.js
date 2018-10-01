@@ -133,6 +133,12 @@ new _index2.default({
                 }
             });
         },
+        '#main': function main() {
+            this.success = 'awesome';
+            this.success = 'awesome1';
+            this.success = 'awesome2';
+            this.success = 'awesome3';
+        },
         '#todo': function todo() {
             var data = [{
                 name: 'Bill',
@@ -1071,8 +1077,20 @@ var _class = function () {
     this.originalContent = $node.textContent;
     this.keys = [];
     this.model = model;
+    this.data = {};
 
     this.replace(function (variable) {
+      Object.defineProperty(model, variable, {
+        get: function get() {
+          return _this.data[variable];
+        },
+        set: function set(val) {
+          console.log(val);
+          _this.data[variable] = val;_utils2.default.debounce(function () {
+            _this.update();
+          })();
+        }
+      });
       _this.keys.push(variable);
       return _utils2.default.stringRef(variable, model);
     });

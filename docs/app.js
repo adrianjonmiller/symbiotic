@@ -12,6 +12,12 @@ new Symbiote({
                 }
             });
         },
+        '#main': function () {
+            this.success = 'awesome'
+            this.success = 'awesome1'
+            this.success = 'awesome2'
+            this.success = 'awesome3'
+        },
         '#todo': function () {
             var data = [
                 {
