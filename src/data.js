@@ -1,3 +1,5 @@
+import utils from './utils'
+
 export default class Data {
   constructor (data, cb) {
     this.method = null;
@@ -29,8 +31,12 @@ export default class Data {
       return
     }
 
+    this.data = newVal
+
     if (watcher) {
-      watcher(newVal, oldVal)
+      (utils.debounce(() => {
+        watcher(newVal, oldVal)
+      }))();
     }
   }
 }
