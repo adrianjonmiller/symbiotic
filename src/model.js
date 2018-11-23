@@ -154,7 +154,7 @@ export default class Model {
                         this[attrName] = val;
 
                     ;(utils.debounce(($node) => {
-                        $node.setAttribute(utils.camelCaseToDash(attrName), root[attrName]);
+                        $node.setAttribute(utils.camelCaseToDash(attrName), this[attrName]);
                     }))($node);
                     }
                 }

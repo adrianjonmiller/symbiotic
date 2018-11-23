@@ -6,7 +6,7 @@ export default class {
     this.originalContent = $node.textContent;
     this.keys = [];
     this.model = model;
-    this.data = {}
+    this.data = {};
 
     this.replace((variable) => {
       Object.defineProperty(model, variable, {

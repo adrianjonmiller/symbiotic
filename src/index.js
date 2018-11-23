@@ -4,7 +4,7 @@ import Model from './model';
 import utils from './utils';
 import global from './global';
 
-export default class Symbiote {
+export default class Symbiotic {
     constructor (config) {
         global.data = config.data || {};
         global.methods = config.methods || {};
@@ -35,6 +35,6 @@ export default class Symbiote {
     }
 }
 
-if (window && window.Symbiote === undefined) {
-    window.Symbiote = Symbiote;
+if (window && window.Symbiotic === undefined) {
+    window.Symbiotic = Symbiotic;
 }

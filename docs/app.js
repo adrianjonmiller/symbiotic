@@ -5,6 +5,10 @@ import Plugin2 from './plugin';
 
 new Symbiote({
     methods: {
+        '.js-test': function () {
+            console.log(this)
+            this.class = 'test'
+        },
         'body': function () {   
             this.extend({
                 something: function () {
