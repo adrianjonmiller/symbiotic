@@ -137,6 +137,11 @@ new _index2.default({
                 }
             });
         },
+        '.input-test': function inputTest() {
+            this.value = 'something';
+            this.value = 'ntohing';
+            console.log(this.value);
+        },
         '#main': function main() {
             this.success = 'awesome';
             this.success = 'awesome1';
@@ -624,6 +629,17 @@ var Model = function () {
                 return _this.style;
             }
         });
+
+        if ($node.tagName === 'input') {
+            Object.defineProperty(this.model, 'value', {
+                get: function get() {
+                    return _this.$node.value;
+                },
+                set: function set(val) {
+                    _this.$node.value = val;
+                }
+            });
+        }
 
         _utils2.default.check($node.attributes, function (attributes) {
             return _utils2.default.loop(attributes, function (attribute) {

@@ -138,6 +138,17 @@ export default class Model {
             }
         });
 
+        if ($node.tagName === 'input') {
+            Object.defineProperty(this.model, 'value', {
+                get: () => {
+                    return this.$node.value
+                },
+                set: (val) => {
+                    this.$node.value = val;
+                }
+            })
+        }
+
         utils.check($node.attributes, (attributes) => utils.loop(attributes, (attribute) => {
             let attrName = utils.dashToCamelCase(attribute.nodeName);
             let $attrValue = attribute.nodeValue;

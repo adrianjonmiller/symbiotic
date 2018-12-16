@@ -16,6 +16,11 @@ new Symbiote({
                 }
             });
         },
+        '.input-test': function () {
+            this.value = 'something'
+            this.value = 'ntohing'
+            console.log(this.value)
+        },
         '#main': function () {
             this.success = 'awesome'
             this.success = 'awesome1'
