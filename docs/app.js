@@ -5,8 +5,23 @@ import Plugin2 from './plugin';
 
 new Symbiote({
     methods: {
+        '.link-test': function () {
+            this.states = {
+                start: {
+                    href: (href) => {
+                        return href
+                    },
+                    on: {
+                        hover: {
+                            href: (href) => {
+                                return href + '/directory' 
+                            }
+                        }
+                    }
+                }
+            }
+        },
         '.js-test': function () {
-            console.log(this)
             this.class = 'test'
         },
         'body': function () {   
@@ -16,10 +31,77 @@ new Symbiote({
                 }
             });
         },
-        '.input-test': function () {
-            this.value = 'something'
-            this.value = 'ntohing'
-            console.log(this.value)
+        '.event-test': function () {
+            this.states = {
+                start: {
+                    on: {
+                        SUBMIT: 'loading',
+                        hover: {
+                            style: {
+                                backgroundColor: 'yellow',
+                                color: 'black'
+                            }
+                        }
+                    },
+                    style: {
+                        backgroundColor: 'blue',
+                        color: 'white',
+                        outline: 'none',
+                        padding: '.5rem 1rem',
+                        borderRadius: '.5rem',
+                        lineHeight: '1em',
+                        border: 'none'
+                    },
+                    class: (baseclass) => {
+                        return 'ready ' + baseclass
+                    },
+                    text: 'Click me',
+                },
+                loading: {
+                    on: {
+                        REJECT: 'error',
+                        RESOLVE: 'success'
+                    },
+                    style: {
+                        backgroundColor: 'gray'
+                    },
+                    class: (currentClass) => {
+                        console.log(currentClass)
+                        return 'loading ' + currentClass
+                    },
+                    text: 'Clicked'
+                },
+                error: {
+                    on: {
+                        SUBMIT: 'loading'
+                    }
+                },
+                success: {
+                    on: {
+                        SUBMIT: 'start'
+                    },
+                    style: {
+                        backgroundColor: 'green'
+                    },
+                    text: "Success!"
+                }
+            };
+
+            this.$event('click', e => {
+                switch (this.state) {
+                    case 'start':
+                        this.emit('SUBMIT')
+                    break;
+                    
+                    case 'loading':
+                        this.emit("RESOLVE")
+                    break;
+
+                    case 'success':
+                        this.emit('SUBMIT')
+                    break;
+                }                
+            })
         },
         '#main': function () {
             this.success = 'awesome'
