@@ -7,7 +7,9 @@ import Data from './data';
 import TextNode from './textNode';
 
 export default class Model {
-    constructor ($node) {    
+    constructor ($node) {
+        var hover = false;
+
         this.$styleNode = utils.createStyleNode();
         this.events = {};
         this.style = {};
@@ -22,7 +24,18 @@ export default class Model {
         this.textNodes = [];
         this.width = $node.offsetWidth;
         this.height = $node.offsetHeight;
+        this.state = 'start';
+        this.hover = false;
+        this.prevState = '';
+        this.states = {};
         this.watchers = {};
+
+        global.vdom[this.id] = {
+            tagName: this.tagName,
+            id: this.id,
+            show: this.show,
+            nodeType: $node.nodeType,
+        }
 
         this.model = {
             $node: $node,
@@ -47,13 +60,6 @@ export default class Model {
         if (this.tagName === 'template') {
             this.template = utils.getTemplateNode($node);
             this.model.template = this.template;
-        }
-
-        global.vdom[this.id] = {
-            tagName: this.tagName,
-            id: this.id,
-            show: this.show,
-            nodeType: $node.nodeType
         }
 
         Object.defineProperty(this.model, 'id', {
@@ -126,6 +132,36 @@ export default class Model {
             }
         });
 
+        Object.defineProperty(this, 'hover', {
+            get: () => {
+                return hover;
+                this.update()
+            },
+            set: (val) => {
+                hover = val;
+                this.update()
+            }
+        })
+
+        Object.defineProperty(this.model, 'states', {
+            get: () => {
+                return this.states
+            },
+            set: states => {
+                this.states = states
+                this.update()
+            }
+        })
+
+        Object.defineProperty(this.model, 'state', {
+            get: () => {
+                return this.state
+            },
+            set: state => {
+                this.state = state
+            }
+        })
+
         Object.defineProperty(this.model, 'style', {
             get: () => {
                 this.updateStyles(this.style, this.$styleNode, this.id);
@@ -138,27 +174,47 @@ export default class Model {
             }
         });
 
+        if ($node.tagName === 'input') {
+            Object.defineProperty(this.model, 'value', {
+                get: () => {
+                    return this.$node.value
+                },
+                set: (val) => {
+                    this.$node.value = val;
+                }
+            })
+        }
+
+        this.$node.addEventListener('mouseover', () => {
+            this.update('hover')
+        })
+
+        this.$node.addEventListener('mouseout', () => {
+            this.update()
+        })
+
         utils.check($node.attributes, (attributes) => utils.loop(attributes, (attribute) => {
             let attrName = utils.dashToCamelCase(attribute.nodeName);
             let $attrValue = attribute.nodeValue;
     
             if (!this[attrName] && attrName !== 'id' && attrName !== 'for') {
                 this[attrName] = $attrValue;
+                global.vdom[this.id][attrName] = $attrValue;
 
-            Object.defineProperty(this.model, attrName, {
-                get: () => {
-                    return this[attrName]
-                },
-                set: (val) => {
-                    if (this[attrName] !== val) {
-                        this[attrName] = val;
+                Object.defineProperty(this.model, attrName, {
+                    get: () => {
+                        return this[attrName]
+                    },
+                    set: (val) => {
+                        if (this[attrName] !== val) {
+                            this[attrName] = val;
 
-                    ;(utils.debounce(($node) => {
-                        $node.setAttribute(utils.camelCaseToDash(attrName), this[attrName]);
-                    }))($node);
+                        ;(utils.debounce(($node) => {
+                            $node.setAttribute(utils.camelCaseToDash(attrName), this[attrName]);
+                        }))($node);
+                        }
                     }
-                }
-            });
+                });
             }
         }));
 
@@ -170,16 +226,18 @@ export default class Model {
                 if (!this.lastChild) {
                     this.firstChild = child;
                     this.model.child = child;
+                    global.vdom[this.id].child = child.id;
                 } else {
                     this.lastChild.next = child;
                     child.prev = this.lastChild;
+                    global.vdom[this.lastChild.id].next = child.id;
                 }
                 this.lastChild = child;
             }
 
             utils.getTextNode($child, ($textNode) => {
                 this.textNodes.push(new TextNode($textNode, this.model));
-            });
+            });            
         }));
 
         if ($node.getAttribute('for')) {
@@ -204,7 +262,14 @@ export default class Model {
             this.plugins(global.plugins);
         }
 
+        console.log(global.vdom)
+                
         return this.model;
+    }
+
+    $event(event, cb, useCapture) {
+        useCapture = useCapture || false;
+        this.$node.addEventListener(event, (e) => cb.apply(this.model, [e]), useCapture)
     }
 
     append ($node, methods) {
@@ -230,11 +295,6 @@ export default class Model {
         return node;
     }
 
-    $event (event, cb, useCapture) {
-        useCapture = useCapture || false;
-        this.$node.addEventListener(event, (e) => cb.apply(this.model, [e]), useCapture)
-    }
-
     emit (event, payload) {
         let bubbles = true;
         payload = payload || this.model;
@@ -252,13 +312,11 @@ export default class Model {
             }
         }
 
+        this.update(event)
+
         if (bubbles && this.parent) {
             this.parent.emit(event, payload);
-        }
-    }
-
-    watch (watchers) {
-        Object.assign(this.watchers, watchers);
+        }        
     }
 
     extend (data) {
@@ -347,7 +405,7 @@ export default class Model {
     on (event, fn) {
         event = event.split('.');
         var name = event[0];
-        var bubbles = event[1] !== 'prevent';
+        var bubbles = event[1] !== 'stop';
 
         if (this.events === undefined) {
             this.events = {};
@@ -421,6 +479,55 @@ export default class Model {
         }));
     }
 
+    update (event) {
+        event = event || null;
+        let state = null;
+        let next  = null;
+        let ctx = this;
+
+        if (!(this.state in this.states)) {
+            return
+        }
+
+        state = this.states[this.state]
+
+        if (!event) {
+            update(state)
+            return
+        }
+
+        if (state.on === undefined) {
+            return
+        }
+
+        if (!(event in state.on)) {
+            return
+        }
+
+        if (typeof state.on[event] === 'string') {
+            this.state = state.on[event]
+            next = this.states[this.state]
+        }
+
+        if (typeof state.on[event] === 'object') {
+            next = state.on[event]
+        }
+
+        update(next)
+
+        function update (values) {
+            utils.loop(values, (value, key) => {
+                if (key !== 'on') {
+                    if (typeof value === 'function') {
+                        ctx.model[key] = value(global.vdom[ctx.id][key])
+                    } else {
+                        ctx.model[key] = value
+                    }
+                }
+            })
+        }
+    }
+
     updateStyles() {
         (utils.debounce(() => {
             if (!utils.check(this.style)) {
@@ -469,5 +576,9 @@ export default class Model {
                 })
             })
         }))();
+    }
+
+    watch(watchers) {
+        Object.assign(this.watchers, watchers);
     }
 }

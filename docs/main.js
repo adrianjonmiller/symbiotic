@@ -126,14 +126,103 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 new _index2.default({
     methods: {
+        '.link-test': function linkTest() {
+            this.states = {
+                start: {
+                    href: function href(_href) {
+                        return _href;
+                    },
+                    on: {
+                        hover: {
+                            href: function href(_href2) {
+                                return _href2 + '/directory';
+                            }
+                        }
+                    }
+                }
+            };
+        },
         '.js-test': function jsTest() {
-            console.log(this);
             this.class = 'test';
         },
         'body': function body() {
             this.extend({
                 something: function something() {
                     return 'test';
+                }
+            });
+        },
+        '.event-test': function eventTest() {
+            var _this = this;
+
+            this.states = {
+                start: {
+                    on: {
+                        SUBMIT: 'loading',
+                        hover: {
+                            style: {
+                                backgroundColor: 'yellow',
+                                color: 'black'
+                            }
+                        }
+                    },
+                    style: {
+                        backgroundColor: 'blue',
+                        color: 'white',
+                        outline: 'none',
+                        padding: '.5rem 1rem',
+                        borderRadius: '.5rem',
+                        lineHeight: '1em',
+                        border: 'none'
+                    },
+                    class: function _class(baseclass) {
+                        return 'ready ' + baseclass;
+                    },
+                    text: 'Click me'
+                },
+                loading: {
+                    on: {
+                        REJECT: 'error',
+                        RESOLVE: 'success'
+                    },
+                    style: {
+                        backgroundColor: 'gray'
+                    },
+                    class: function _class(currentClass) {
+                        console.log(currentClass);
+                        return 'loading ' + currentClass;
+                    },
+                    text: 'Clicked'
+                },
+                error: {
+                    on: {
+                        SUBMIT: 'loading'
+                    }
+                },
+                success: {
+                    on: {
+                        SUBMIT: 'start'
+                    },
+                    style: {
+                        backgroundColor: 'green'
+                    },
+                    text: "Success!"
+                }
+            };
+
+            this.$event('click', function (e) {
+                switch (_this.state) {
+                    case 'start':
+                        _this.emit('SUBMIT');
+                        break;
+
+                    case 'loading':
+                        _this.emit("RESOLVE");
+                        break;
+
+                    case 'success':
+                        _this.emit('SUBMIT');
+                        break;
                 }
             });
         },
@@ -495,6 +584,8 @@ var Model = function () {
 
         _classCallCheck(this, Model);
 
+        var hover = false;
+
         this.$styleNode = _utils2.default.createStyleNode();
         this.events = {};
         this.style = {};
@@ -509,7 +600,18 @@ var Model = function () {
         this.textNodes = [];
         this.width = $node.offsetWidth;
         this.height = $node.offsetHeight;
+        this.state = 'start';
+        this.hover = false;
+        this.prevState = '';
+        this.states = {};
         this.watchers = {};
+
+        _global2.default.vdom[this.id] = {
+            tagName: this.tagName,
+            id: this.id,
+            show: this.show,
+            nodeType: $node.nodeType
+        };
 
         this.model = {
             $node: $node,
@@ -535,13 +637,6 @@ var Model = function () {
             this.template = _utils2.default.getTemplateNode($node);
             this.model.template = this.template;
         }
-
-        _global2.default.vdom[this.id] = {
-            tagName: this.tagName,
-            id: this.id,
-            show: this.show,
-            nodeType: $node.nodeType
-        };
 
         Object.defineProperty(this.model, 'id', {
             get: function get() {
@@ -613,6 +708,36 @@ var Model = function () {
             }
         });
 
+        Object.defineProperty(this, 'hover', {
+            get: function get() {
+                return hover;
+                _this.update();
+            },
+            set: function set(val) {
+                hover = val;
+                _this.update();
+            }
+        });
+
+        Object.defineProperty(this.model, 'states', {
+            get: function get() {
+                return _this.states;
+            },
+            set: function set(states) {
+                _this.states = states;
+                _this.update();
+            }
+        });
+
+        Object.defineProperty(this.model, 'state', {
+            get: function get() {
+                return _this.state;
+            },
+            set: function set(state) {
+                _this.state = state;
+            }
+        });
+
         Object.defineProperty(this.model, 'style', {
             get: function get() {
                 _this.updateStyles(_this.style, _this.$styleNode, _this.id);
@@ -625,6 +750,25 @@ var Model = function () {
             }
         });
 
+        if ($node.tagName === 'input') {
+            Object.defineProperty(this.model, 'value', {
+                get: function get() {
+                    return _this.$node.value;
+                },
+                set: function set(val) {
+                    _this.$node.value = val;
+                }
+            });
+        }
+
+        this.$node.addEventListener('mouseover', function () {
+            _this.update('hover');
+        });
+
+        this.$node.addEventListener('mouseout', function () {
+            _this.update();
+        });
+
         _utils2.default.check($node.attributes, function (attributes) {
             return _utils2.default.loop(attributes, function (attribute) {
                 var attrName = _utils2.default.dashToCamelCase(attribute.nodeName);
@@ -632,6 +776,7 @@ var Model = function () {
 
                 if (!_this[attrName] && attrName !== 'id' && attrName !== 'for') {
                     _this[attrName] = $attrValue;
+                    _global2.default.vdom[_this.id][attrName] = $attrValue;
 
                     Object.defineProperty(_this.model, attrName, {
                         get: function get() {
@@ -660,9 +805,11 @@ var Model = function () {
                     if (!_this.lastChild) {
                         _this.firstChild = child;
                         _this.model.child = child;
+                        _global2.default.vdom[_this.id].child = child.id;
                     } else {
                         _this.lastChild.next = child;
                         child.prev = _this.lastChild;
+                        _global2.default.vdom[_this.lastChild.id].next = child.id;
                     }
                     _this.lastChild = child;
                 }
@@ -695,13 +842,25 @@ var Model = function () {
             this.plugins(_global2.default.plugins);
         }
 
+        console.log(_global2.default.vdom);
+
         return this.model;
     }
 
     _createClass(Model, [{
+        key: '$event',
+        value: function $event(event, cb, useCapture) {
+            var _this2 = this;
+
+            useCapture = useCapture || false;
+            this.$node.addEventListener(event, function (e) {
+                return cb.apply(_this2.model, [e]);
+            }, useCapture);
+        }
+    }, {
         key: 'append',
         value: function append($node, methods) {
-            var _this2 = this;
+            var _this3 = this;
 
             var node = new Model($node);
             node.parent = this.model;
@@ -718,21 +877,11 @@ var Model = function () {
             this.lastChild = node;
 
             _utils2.default.debounce(function () {
-                _this2.$node.appendChild(node.$node);
+                _this3.$node.appendChild(node.$node);
                 _utils2.default.init(node, methods);
             })();
 
             return node;
-        }
-    }, {
-        key: '$event',
-        value: function $event(event, cb, useCapture) {
-            var _this3 = this;
-
-            useCapture = useCapture || false;
-            this.$node.addEventListener(event, function (e) {
-                return cb.apply(_this3.model, [e]);
-            }, useCapture);
         }
     }, {
         key: 'emit',
@@ -753,14 +902,11 @@ var Model = function () {
                 }
             }
 
+            this.update(event);
+
             if (bubbles && this.parent) {
                 this.parent.emit(event, payload);
             }
-        }
-    }, {
-        key: 'watch',
-        value: function watch(watchers) {
-            Object.assign(this.watchers, watchers);
         }
     }, {
         key: 'extend',
@@ -852,7 +998,7 @@ var Model = function () {
         value: function on(event, fn) {
             event = event.split('.');
             var name = event[0];
-            var bubbles = event[1] !== 'prevent';
+            var bubbles = event[1] !== 'stop';
 
             if (this.events === undefined) {
                 this.events = {};
@@ -940,6 +1086,56 @@ var Model = function () {
             });
         }
     }, {
+        key: 'update',
+        value: function update(event) {
+            event = event || null;
+            var state = null;
+            var next = null;
+            var ctx = this;
+
+            if (!(this.state in this.states)) {
+                return;
+            }
+
+            state = this.states[this.state];
+
+            if (!event) {
+                update(state);
+                return;
+            }
+
+            if (state.on === undefined) {
+                return;
+            }
+
+            if (!(event in state.on)) {
+                return;
+            }
+
+            if (typeof state.on[event] === 'string') {
+                this.state = state.on[event];
+                next = this.states[this.state];
+            }
+
+            if (_typeof(state.on[event]) === 'object') {
+                next = state.on[event];
+            }
+
+            update(next);
+
+            function update(values) {
+                _utils2.default.loop(values, function (value, key) {
+                    if (key !== 'on') {
+                        if (typeof value === 'function') {
+                            ctx.model[key] = value(_global2.default.vdom[ctx.id][key]);
+                        } else {
+                            ctx.model[key] = value;
+                        }
+                    }
+                });
+            }
+        }
+    }, {
         key: 'updateStyles',
         value: function updateStyles() {
             var _this7 = this;
@@ -994,6 +1190,11 @@ var Model = function () {
                     });
                 });
             })();
+        }
+    }, {
+        key: 'watch',
+        value: function watch(watchers) {
+            Object.assign(this.watchers, watchers);
         }
     }]);
 
