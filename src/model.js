@@ -132,17 +132,6 @@ export default class Model {
             }
         });
 
-        Object.defineProperty(this, 'hover', {
-            get: () => {
-                return hover;
-                this.update()
-            },
-            set: (val) => {
-                hover = val;
-                this.update()
-            }
-        })
-
         Object.defineProperty(this.model, 'states', {
             get: () => {
                 return this.states
@@ -158,7 +147,10 @@ export default class Model {
                 return this.state
             },
             set: state => {
-                this.state = state
+                if (this.state !== state) {
+                    this.state = state
+                    this.update()
+                }
             }
         })
 
@@ -261,8 +253,6 @@ export default class Model {
         if (global.plugins !== null) {
             this.plugins(global.plugins);
         }
-
-        console.log(global.vdom)
                 
         return this.model;
     }

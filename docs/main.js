@@ -126,7 +126,17 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 new _index2.default({
     methods: {
+        '.test': function test() {
+            this.on('UPLOAD', function (item) {
+                item.state = 'loading';
+                setTimeout(function () {
+                    item.state = 'success';
+                }, 3000);
+            });
+        },
         '.link-test': function linkTest() {
+            var _this = this;
+
             this.states = {
                 start: {
                     href: function href(_href) {
@@ -139,8 +149,22 @@ new _index2.default({
                             }
                         }
                     }
+                },
+                loading: {
+                    style: {
+                        color: 'orange'
+                    }
+                },
+                success: {
+                    style: {
+                        color: 'green'
+                    }
                 }
             };
+
+            this.$event('click', function (e) {
+                _this.emit('UPLOAD');
+            });
         },
         '.js-test': function jsTest() {
             this.class = 'test';
@@ -153,7 +177,7 @@ new _index2.default({
             });
         },
         '.event-test': function eventTest() {
-            var _this = this;
+            var _this2 = this;
 
             this.states = {
                 start: {
@@ -211,17 +235,17 @@ new _index2.default({
             };
 
             this.$event('click', function (e) {
-                switch (_this.state) {
+                switch (_this2.state) {
                     case 'start':
-                        _this.emit('SUBMIT');
+                        _this2.emit('SUBMIT');
                         break;
 
                     case 'loading':
-                        _this.emit("RESOLVE");
+                        _this2.emit("RESOLVE");
                         break;
 
                     case 'success':
-                        _this.emit('SUBMIT');
+                        _this2.emit('SUBMIT');
                         break;
                 }
             });
@@ -734,7 +758,10 @@ var Model = function () {
                 return _this.state;
             },
             set: function set(state) {
-                _this.state = state;
+                if (_this.state !== state) {
+                    _this.state = state;
+                    _this.update();
+                }
             }
         });
 
@@ -841,8 +868,6 @@ var Model = function () {
         if (_global2.default.plugins !== null) {
             this.plugins(_global2.default.plugins);
         }
-
-        console.log(_global2.default.vdom);
 
         return this.model;
     }

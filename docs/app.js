@@ -5,6 +5,14 @@ import Plugin2 from './plugin';
 
 new Symbiote({
     methods: {
+        '.test': function () {
+            this.on('UPLOAD', (item) => {
+                item.state = 'loading';
+                setTimeout(() => {
+                    item.state = 'success'
+                }, 3000)
+            })
+        },
         '.link-test': function () {
             this.states = {
                 start: {
@@ -18,8 +26,22 @@ new Symbiote({
                             }
                         }
                     }
+                },
+                loading: {
+                    style: {
+                        color: 'orange'
+                    }
+                },
+                success: {
+                    style: {
+                        color: 'green'
+                    }
                 }
             }
+
+            this.$event('click', e => {
+                this.emit('UPLOAD')
+            })
         },
         '.js-test': function () {
             this.class = 'test'
