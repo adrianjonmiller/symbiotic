@@ -3,6 +3,25 @@ import Button from './button.html';
 import Plugin from 'Plugins/test'
 import Plugin2 from './plugin';
 
+function request(body, cb) {
+    fetch('https://graphql.datocms.com/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer ' + '30d8c651eebea64a994dcba84ddd9d',
+        },
+        body: JSON.stringify(body),
+    }).then(res => {
+        return res.json()
+    }).then((res) => {
+        cb(null, res.data)
+    }).catch((err) => {
+        cb(err)
+    });
+}
+
+
 new Symbiote({
     methods: {
         '.test': function () {
@@ -170,18 +189,35 @@ new Symbiote({
                 data: 'data'
             })
         },
-        '.js-item': function () {
-
+        '.js-image': function () {
+            return this
         },
         '#test': function () {
-            this.success = [
-                    {item: 'soemthing'},
-                    {item: 'something 2'}
-                ];
+            this.extend({
+                items: []
+            })
 
-            // this.success[1].item = 'something 3';
-            this.success.push({item: 'something 4'});
-            this.success.push({item: 'something 5'});
+            const body = {
+                query: `{
+                    allAbsolutes() {
+                        className
+                        description
+                        thumbnail {
+                        url
+                        }
+                    }
+                    }`
+                };
+
+            request(body, (err, res) => {
+                if (err) {
+                    throw err
+                }
+
+                console.log(res)
+
+                this.items = res.allAbsolutes
+            })
         }
     },
     plugins: [Plugin],

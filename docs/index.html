@@ -12,8 +12,11 @@
             <button class="event-test">${text}</button>
         </div>
         <ul>
-            <template id="test" for="item in success">
-                <li class="js-item"><a href="" data="item">${item.item}</a></li>
+            <template id="test" for="item in items">
+                <li class="js-item">
+                    <a href="" data="item">${item.className}</a>
+                    <img class="js-image" src="" data="item" />
+                </li>
             </template>     
         </ul>
         <script src="./main.js"></script>

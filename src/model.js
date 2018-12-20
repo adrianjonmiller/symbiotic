@@ -5,11 +5,10 @@ import global from './global';
 import Observer from './observe';
 import Data from './data';
 import TextNode from './textNode';
+import ResizeObserver from 'resize-observer-polyfill';
 
 export default class Model {
     constructor ($node) {
-        var hover = false;
-
         this.$styleNode = utils.createStyleNode();
         this.events = {};
         this.style = {};
@@ -241,14 +240,29 @@ export default class Model {
             Object.defineProperty(this.model, data, {
                 set: (vals) => {
                     this[data] = vals;
-                    this.updateTextNodes(vals, key)
+                    utils.check(vals, (nodes) => {
+                        this.updateTextNodes(nodes, key)
+                    })
                 },
                 get: () => {
-                    this.updateTextNodes(this[data], key)
+                    utils.check(this[data], (nodes) => {
+                        this.updateTextNodes(nodes, key)
+                    })
+                    
                     return this[data]
                 }
             })
         }
+
+        new ResizeObserver((entries, observer) => {
+            for (const entry of entries) {
+                const { left, top, width, height } = entry.contentRect;
+                this.width = width;
+                this.height = height;
+                this.top = top;
+                this.left = left;
+            }
+        }).observe(this.$node);
 
         if (global.plugins !== null) {
             this.plugins(global.plugins);
