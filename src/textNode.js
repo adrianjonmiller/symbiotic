@@ -2,25 +2,35 @@ import utils from './utils';
 
 export default class {
   constructor ($node, model) {
+    const ctx = this;
     this.$node = $node;
     this.originalContent = $node.textContent;
-    this.keys = [];
     this.model = model;
     this.data = {};
 
     this.replace((variable) => {
-      Object.defineProperty(model, variable, {
-        get: () => {
-          return this.data[variable]
-        },
-        set: (val) => {
-          this.data[variable] = val
-          ;(utils.debounce(() => {
-            this.update()
-          }))();
+      (function loop(model, refs, index) {
+        let key = refs[index];
+        if (index < refs.length - 1) {
+          model[key] = {};
+          index++
+          loop(model[key], refs, index)
+        } else {
+          Object.defineProperty(model, key, {
+            get: () => {
+              return ctx.data
+            },
+            set: (val) => {
+              ctx.data = val
+              ;(utils.debounce(() => {
+                ctx.update()
+              }))();
+            },
+            configurable: true
+          })
         }
-      })
-      this.keys.push(variable);
+      })(this.model, variable.split('.'), 0)
+
       return utils.stringRef(variable, model);
     })  
   }

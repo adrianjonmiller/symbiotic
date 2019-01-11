@@ -96,6 +96,1015 @@ return /******/ (function(modules) { // webpackBootstrap
 /************************************************************************/
 /******/ ({
 
+/***/ "./node_modules/resize-observer-polyfill/dist/ResizeObserver.es.js":
+/*!*************************************************************************!*\
+  !*** ./node_modules/resize-observer-polyfill/dist/ResizeObserver.es.js ***!
+  \*************************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* WEBPACK VAR INJECTION */(function(global) {/**
+ * A collection of shims that provide minimal functionality of the ES6 collections.
+ *
+ * These implementations are not meant to be used outside of the ResizeObserver
+ * modules as they cover only a limited range of use cases.
+ */
+/* eslint-disable require-jsdoc, valid-jsdoc */
+var MapShim = (function () {
+    if (typeof Map !== 'undefined') {
+        return Map;
+    }
+    /**
+     * Returns index in provided array that matches the specified key.
+     *
+     * @param {Array<Array>} arr
+     * @param {*} key
+     * @returns {number}
+     */
+    function getIndex(arr, key) {
+        var result = -1;
+        arr.some(function (entry, index) {
+            if (entry[0] === key) {
+                result = index;
+                return true;
+            }
+            return false;
+        });
+        return result;
+    }
+    return /** @class */ (function () {
+        function class_1() {
+            this.__entries__ = [];
+        }
+        Object.defineProperty(class_1.prototype, "size", {
+            /**
+             * @returns {boolean}
+             */
+            get: function () {
+                return this.__entries__.length;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        /**
+         * @param {*} key
+         * @returns {*}
+         */
+        class_1.prototype.get = function (key) {
+            var index = getIndex(this.__entries__, key);
+            var entry = this.__entries__[index];
+            return entry && entry[1];
+        };
+        /**
+         * @param {*} key
+         * @param {*} value
+         * @returns {void}
+         */
+        class_1.prototype.set = function (key, value) {
+            var index = getIndex(this.__entries__, key);
+            if (~index) {
+                this.__entries__[index][1] = value;
+            }
+            else {
+                this.__entries__.push([key, value]);
+            }
+        };
+        /**
+         * @param {*} key
+         * @returns {void}
+         */
+        class_1.prototype.delete = function (key) {
+            var entries = this.__entries__;
+            var index = getIndex(entries, key);
+            if (~index) {
+                entries.splice(index, 1);
+            }
+        };
+        /**
+         * @param {*} key
+         * @returns {void}
+         */
+        class_1.prototype.has = function (key) {
+            return !!~getIndex(this.__entries__, key);
+        };
+        /**
+         * @returns {void}
+         */
+        class_1.prototype.clear = function () {
+            this.__entries__.splice(0);
+        };
+        /**
+         * @param {Function} callback
+         * @param {*} [ctx=null]
+         * @returns {void}
+         */
+        class_1.prototype.forEach = function (callback, ctx) {
+            if (ctx === void 0) { ctx = null; }
+            for (var _i = 0, _a = this.__entries__; _i < _a.length; _i++) {
+                var entry = _a[_i];
+                callback.call(ctx, entry[1], entry[0]);
+            }
+        };
+        return class_1;
+    }());
+})();
+
+/**
+ * Detects whether window and document objects are available in current environment.
+ */
+var isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined' && window.document === document;
+
+// Returns global object of a current environment.
+var global$1 = (function () {
+    if (typeof global !== 'undefined' && global.Math === Math) {
+        return global;
+    }
+    if (typeof self !== 'undefined' && self.Math === Math) {
+        return self;
+    }
+    if (typeof window !== 'undefined' && window.Math === Math) {
+        return window;
+    }
+    // eslint-disable-next-line no-new-func
+    return Function('return this')();
+})();
+
+/**
+ * A shim for the requestAnimationFrame which falls back to the setTimeout if
+ * first one is not supported.
+ *
+ * @returns {number} Requests' identifier.
+ */
+var requestAnimationFrame$1 = (function () {
+    if (typeof requestAnimationFrame === 'function') {
+        // It's required to use a bounded function because IE sometimes throws
+        // an "Invalid calling object" error if rAF is invoked without the global
+        // object on the left hand side.
+        return requestAnimationFrame.bind(global$1);
+    }
+    return function (callback) { return setTimeout(function () { return callback(Date.now()); }, 1000 / 60); };
+})();
+
+// Defines minimum timeout before adding a trailing call.
+var trailingTimeout = 2;
+/**
+ * Creates a wrapper function which ensures that provided callback will be
+ * invoked only once during the specified delay period.
+ *
+ * @param {Function} callback - Function to be invoked after the delay period.
+ * @param {number} delay - Delay after which to invoke callback.
+ * @returns {Function}
+ */
+function throttle (callback, delay) {
+    var leadingCall = false, trailingCall = false, lastCallTime = 0;
+    /**
+     * Invokes the original callback function and schedules new invocation if
+     * the "proxy" was called during current request.
+     *
+     * @returns {void}
+     */
+    function resolvePending() {
+        if (leadingCall) {
+            leadingCall = false;
+            callback();
+        }
+        if (trailingCall) {
+            proxy();
+        }
+    }
+    /**
+     * Callback invoked after the specified delay. It will further postpone
+     * invocation of the original function delegating it to the
+     * requestAnimationFrame.
+     *
+     * @returns {void}
+     */
+    function timeoutCallback() {
+        requestAnimationFrame$1(resolvePending);
+    }
+    /**
+     * Schedules invocation of the original function.
+     *
+     * @returns {void}
+     */
+    function proxy() {
+        var timeStamp = Date.now();
+        if (leadingCall) {
+            // Reject immediately following calls.
+            if (timeStamp - lastCallTime < trailingTimeout) {
+                return;
+            }
+            // Schedule new call to be in invoked when the pending one is resolved.
+            // This is important for "transitions" which never actually start
+            // immediately so there is a chance that we might miss one if change
+            // happens amids the pending invocation.
+            trailingCall = true;
+        }
+        else {
+            leadingCall = true;
+            trailingCall = false;
+            setTimeout(timeoutCallback, delay);
+        }
+        lastCallTime = timeStamp;
+    }
+    return proxy;
+}
+
+// Minimum delay before invoking the update of observers.
+var REFRESH_DELAY = 20;
+// A list of substrings of CSS properties used to find transition events that
+// might affect dimensions of observed elements.
+var transitionKeys = ['top', 'right', 'bottom', 'left', 'width', 'height', 'size', 'weight'];
+// Check if MutationObserver is available.
+var mutationObserverSupported = typeof MutationObserver !== 'undefined';
+/**
+ * Singleton controller class which handles updates of ResizeObserver instances.
+ */
+var ResizeObserverController = /** @class */ (function () {
+    /**
+     * Creates a new instance of ResizeObserverController.
+     *
+     * @private
+     */
+    function ResizeObserverController() {
+        /**
+         * Indicates whether DOM listeners have been added.
+         *
+         * @private {boolean}
+         */
+        this.connected_ = false;
+        /**
+         * Tells that controller has subscribed for Mutation Events.
+         *
+         * @private {boolean}
+         */
+        this.mutationEventsAdded_ = false;
+        /**
+         * Keeps reference to the instance of MutationObserver.
+         *
+         * @private {MutationObserver}
+         */
+        this.mutationsObserver_ = null;
+        /**
+         * A list of connected observers.
+         *
+         * @private {Array<ResizeObserverSPI>}
+         */
+        this.observers_ = [];
+        this.onTransitionEnd_ = this.onTransitionEnd_.bind(this);
+        this.refresh = throttle(this.refresh.bind(this), REFRESH_DELAY);
+    }
+    /**
+     * Adds observer to observers list.
+     *
+     * @param {ResizeObserverSPI} observer - Observer to be added.
+     * @returns {void}
+     */
+    ResizeObserverController.prototype.addObserver = function (observer) {
+        if (!~this.observers_.indexOf(observer)) {
+            this.observers_.push(observer);
+        }
+        // Add listeners if they haven't been added yet.
+        if (!this.connected_) {
+            this.connect_();
+        }
+    };
+    /**
+     * Removes observer from observers list.
+     *
+     * @param {ResizeObserverSPI} observer - Observer to be removed.
+     * @returns {void}
+     */
+    ResizeObserverController.prototype.removeObserver = function (observer) {
+        var observers = this.observers_;
+        var index = observers.indexOf(observer);
+        // Remove observer if it's present in registry.
+        if (~index) {
+            observers.splice(index, 1);
+        }
+        // Remove listeners if controller has no connected observers.
+        if (!observers.length && this.connected_) {
+            this.disconnect_();
+        }
+    };
+    /**
+     * Invokes the update of observers. It will continue running updates insofar
+     * it detects changes.
+     *
+     * @returns {void}
+     */
+    ResizeObserverController.prototype.refresh = function () {
+        var changesDetected = this.updateObservers_();
+        // Continue running updates if changes have been detected as there might
+        // be future ones caused by CSS transitions.
+        if (changesDetected) {
+            this.refresh();
+        }
+    };
+    /**
+     * Updates every observer from observers list and notifies them of queued
+     * entries.
+     *
+     * @private
+     * @returns {boolean} Returns "true" if any observer has detected changes in
+     *      dimensions of it's elements.
+     */
+    ResizeObserverController.prototype.updateObservers_ = function () {
+        // Collect observers that have active observations.
+        var activeObservers = this.observers_.filter(function (observer) {
+            return observer.gatherActive(), observer.hasActive();
+        });
+        // Deliver notifications in a separate cycle in order to avoid any
+        // collisions between observers, e.g. when multiple instances of
+        // ResizeObserver are tracking the same element and the callback of one
+        // of them changes content dimensions of the observed target. Sometimes
+        // this may result in notifications being blocked for the rest of observers.
+        activeObservers.forEach(function (observer) { return observer.broadcastActive(); });
+        return activeObservers.length > 0;
+    };
+    /**
+     * Initializes DOM listeners.
+     *
+     * @private
+     * @returns {void}
+     */
+    ResizeObserverController.prototype.connect_ = function () {
+        // Do nothing if running in a non-browser environment or if listeners
+        // have been already added.
+        if (!isBrowser || this.connected_) {
+            return;
+        }
+        // Subscription to the "Transitionend" event is used as a workaround for
+        // delayed transitions. This way it's possible to capture at least the
+        // final state of an element.
+        document.addEventListener('transitionend', this.onTransitionEnd_);
+        window.addEventListener('resize', this.refresh);
+        if (mutationObserverSupported) {
+            this.mutationsObserver_ = new MutationObserver(this.refresh);
+            this.mutationsObserver_.observe(document, {
+                attributes: true,
+                childList: true,
+                characterData: true,
+                subtree: true
+            });
+        }
+        else {
+            document.addEventListener('DOMSubtreeModified', this.refresh);
+            this.mutationEventsAdded_ = true;
+        }
+        this.connected_ = true;
+    };
+    /**
+     * Removes DOM listeners.
+     *
+     * @private
+     * @returns {void}
+     */
+    ResizeObserverController.prototype.disconnect_ = function () {
+        // Do nothing if running in a non-browser environment or if listeners
+        // have been already removed.
+        if (!isBrowser || !this.connected_) {
+            return;
+        }
+        document.removeEventListener('transitionend', this.onTransitionEnd_);
+        window.removeEventListener('resize', this.refresh);
+        if (this.mutationsObserver_) {
+            this.mutationsObserver_.disconnect();
+        }
+        if (this.mutationEventsAdded_) {
+            document.removeEventListener('DOMSubtreeModified', this.refresh);
+        }
+        this.mutationsObserver_ = null;
+        this.mutationEventsAdded_ = false;
+        this.connected_ = false;
+    };
+    /**
+     * "Transitionend" event handler.
+     *
+     * @private
+     * @param {TransitionEvent} event
+     * @returns {void}
+     */
+    ResizeObserverController.prototype.onTransitionEnd_ = function (_a) {
+        var _b = _a.propertyName, propertyName = _b === void 0 ? '' : _b;
+        // Detect whether transition may affect dimensions of an element.
+        var isReflowProperty = transitionKeys.some(function (key) {
+            return !!~propertyName.indexOf(key);
+        });
+        if (isReflowProperty) {
+            this.refresh();
+        }
+    };
+    /**
+     * Returns instance of the ResizeObserverController.
+     *
+     * @returns {ResizeObserverController}
+     */
+    ResizeObserverController.getInstance = function () {
+        if (!this.instance_) {
+            this.instance_ = new ResizeObserverController();
+        }
+        return this.instance_;
+    };
+    /**
+     * Holds reference to the controller's instance.
+     *
+     * @private {ResizeObserverController}
+     */
+    ResizeObserverController.instance_ = null;
+    return ResizeObserverController;
+}());
+
+/**
+ * Defines non-writable/enumerable properties of the provided target object.
+ *
+ * @param {Object} target - Object for which to define properties.
+ * @param {Object} props - Properties to be defined.
+ * @returns {Object} Target object.
+ */
+var defineConfigurable = (function (target, props) {
+    for (var _i = 0, _a = Object.keys(props); _i < _a.length; _i++) {
+        var key = _a[_i];
+        Object.defineProperty(target, key, {
+            value: props[key],
+            enumerable: false,
+            writable: false,
+            configurable: true
+        });
+    }
+    return target;
+});
+
+/**
+ * Returns the global object associated with provided element.
+ *
+ * @param {Object} target
+ * @returns {Object}
+ */
+var getWindowOf = (function (target) {
+    // Assume that the element is an instance of Node, which means that it
+    // has the "ownerDocument" property from which we can retrieve a
+    // corresponding global object.
+    var ownerGlobal = target && target.ownerDocument && target.ownerDocument.defaultView;
+    // Return the local global object if it's not possible extract one from
+    // provided element.
+    return ownerGlobal || global$1;
+});
+
+// Placeholder of an empty content rectangle.
+var emptyRect = createRectInit(0, 0, 0, 0);
+/**
+ * Converts provided string to a number.
+ *
+ * @param {number|string} value
+ * @returns {number}
+ */
+function toFloat(value) {
+    return parseFloat(value) || 0;
+}
+/**
+ * Extracts borders size from provided styles.
+ *
+ * @param {CSSStyleDeclaration} styles
+ * @param {...string} positions - Borders positions (top, right, ...)
+ * @returns {number}
+ */
+function getBordersSize(styles) {
+    var positions = [];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        positions[_i - 1] = arguments[_i];
+    }
+    return positions.reduce(function (size, position) {
+        var value = styles['border-' + position + '-width'];
+        return size + toFloat(value);
+    }, 0);
+}
+/**
+ * Extracts paddings sizes from provided styles.
+ *
+ * @param {CSSStyleDeclaration} styles
+ * @returns {Object} Paddings box.
+ */
+function getPaddings(styles) {
+    var positions = ['top', 'right', 'bottom', 'left'];
+    var paddings = {};
+    for (var _i = 0, positions_1 = positions; _i < positions_1.length; _i++) {
+        var position = positions_1[_i];
+        var value = styles['padding-' + position];
+        paddings[position] = toFloat(value);
+    }
+    return paddings;
+}
+/**
+ * Calculates content rectangle of provided SVG element.
+ *
+ * @param {SVGGraphicsElement} target - Element content rectangle of which needs
+ *      to be calculated.
+ * @returns {DOMRectInit}
+ */
+function getSVGContentRect(target) {
+    var bbox = target.getBBox();
+    return createRectInit(0, 0, bbox.width, bbox.height);
+}
+/**
+ * Calculates content rectangle of provided HTMLElement.
+ *
+ * @param {HTMLElement} target - Element for which to calculate the content rectangle.
+ * @returns {DOMRectInit}
+ */
+function getHTMLElementContentRect(target) {
+    // Client width & height properties can't be
+    // used exclusively as they provide rounded values.
+    var clientWidth = target.clientWidth, clientHeight = target.clientHeight;
+    // By this condition we can catch all non-replaced inline, hidden and
+    // detached elements. Though elements with width & height properties less
+    // than 0.5 will be discarded as well.
+    //
+    // Without it we would need to implement separate methods for each of
+    // those cases and it's not possible to perform a precise and performance
+    // effective test for hidden elements. E.g. even jQuery's ':visible' filter
+    // gives wrong results for elements with width & height less than 0.5.
+    if (!clientWidth && !clientHeight) {
+        return emptyRect;
+    }
+    var styles = getWindowOf(target).getComputedStyle(target);
+    var paddings = getPaddings(styles);
+    var horizPad = paddings.left + paddings.right;
+    var vertPad = paddings.top + paddings.bottom;
+    // Computed styles of width & height are being used because they are the
+    // only dimensions available to JS that contain non-rounded values. It could
+    // be possible to utilize the getBoundingClientRect if only it's data wasn't
+    // affected by CSS transformations let alone paddings, borders and scroll bars.
+    var width = toFloat(styles.width), height = toFloat(styles.height);
+    // Width & height include paddings and borders when the 'border-box' box
+    // model is applied (except for IE).
+    if (styles.boxSizing === 'border-box') {
+        // Following conditions are required to handle Internet Explorer which
+        // doesn't include paddings and borders to computed CSS dimensions.
+        //
+        // We can say that if CSS dimensions + paddings are equal to the "client"
+        // properties then it's either IE, and thus we don't need to subtract
+        // anything, or an element merely doesn't have paddings/borders styles.
+        if (Math.round(width + horizPad) !== clientWidth) {
+            width -= getBordersSize(styles, 'left', 'right') + horizPad;
+        }
+        if (Math.round(height + vertPad) !== clientHeight) {
+            height -= getBordersSize(styles, 'top', 'bottom') + vertPad;
+        }
+    }
+    // Following steps can't be applied to the document's root element as its
+    // client[Width/Height] properties represent viewport area of the window.
+    // Besides, it's as well not necessary as the <html> itself neither has
+    // rendered scroll bars nor it can be clipped.
+    if (!isDocumentElement(target)) {
+        // In some browsers (only in Firefox, actually) CSS width & height
+        // include scroll bars size which can be removed at this step as scroll
+        // bars are the only difference between rounded dimensions + paddings
+        // and "client" properties, though that is not always true in Chrome.
+        var vertScrollbar = Math.round(width + horizPad) - clientWidth;
+        var horizScrollbar = Math.round(height + vertPad) - clientHeight;
+        // Chrome has a rather weird rounding of "client" properties.
+        // E.g. for an element with content width of 314.2px it sometimes gives
+        // the client width of 315px and for the width of 314.7px it may give
+        // 314px. And it doesn't happen all the time. So just ignore this delta
+        // as a non-relevant.
+        if (Math.abs(vertScrollbar) !== 1) {
+            width -= vertScrollbar;
+        }
+        if (Math.abs(horizScrollbar) !== 1) {
+            height -= horizScrollbar;
+        }
+    }
+    return createRectInit(paddings.left, paddings.top, width, height);
+}
+/**
+ * Checks whether provided element is an instance of the SVGGraphicsElement.
+ *
+ * @param {Element} target - Element to be checked.
+ * @returns {boolean}
+ */
+var isSVGGraphicsElement = (function () {
+    // Some browsers, namely IE and Edge, don't have the SVGGraphicsElement
+    // interface.
+    if (typeof SVGGraphicsElement !== 'undefined') {
+        return function (target) { return target instanceof getWindowOf(target).SVGGraphicsElement; };
+    }
+    // If it's so, then check that element is at least an instance of the
+    // SVGElement and that it has the "getBBox" method.
+    // eslint-disable-next-line no-extra-parens
+    return function (target) { return (target instanceof getWindowOf(target).SVGElement &&
+        typeof target.getBBox === 'function'); };
+})();
+/**
+ * Checks whether provided element is a document element (<html>).
+ *
+ * @param {Element} target - Element to be checked.
+ * @returns {boolean}
+ */
+function isDocumentElement(target) {
+    return target === getWindowOf(target).document.documentElement;
+}
+/**
+ * Calculates an appropriate content rectangle for provided html or svg element.
+ *
+ * @param {Element} target - Element content rectangle of which needs to be calculated.
+ * @returns {DOMRectInit}
+ */
+function getContentRect(target) {
+    if (!isBrowser) {
+        return emptyRect;
+    }
+    if (isSVGGraphicsElement(target)) {
+        return getSVGContentRect(target);
+    }
+    return getHTMLElementContentRect(target);
+}
+/**
+ * Creates rectangle with an interface of the DOMRectReadOnly.
+ * Spec: https://drafts.fxtf.org/geometry/#domrectreadonly
+ *
+ * @param {DOMRectInit} rectInit - Object with rectangle's x/y coordinates and dimensions.
+ * @returns {DOMRectReadOnly}
+ */
+function createReadOnlyRect(_a) {
+    var x = _a.x, y = _a.y, width = _a.width, height = _a.height;
+    // If DOMRectReadOnly is available use it as a prototype for the rectangle.
+    var Constr = typeof DOMRectReadOnly !== 'undefined' ? DOMRectReadOnly : Object;
+    var rect = Object.create(Constr.prototype);
+    // Rectangle's properties are not writable and non-enumerable.
+    defineConfigurable(rect, {
+        x: x, y: y, width: width, height: height,
+        top: y,
+        right: x + width,
+        bottom: height + y,
+        left: x
+    });
+    return rect;
+}
+/**
+ * Creates DOMRectInit object based on the provided dimensions and the x/y coordinates.
+ * Spec: https://drafts.fxtf.org/geometry/#dictdef-domrectinit
+ *
+ * @param {number} x - X coordinate.
+ * @param {number} y - Y coordinate.
+ * @param {number} width - Rectangle's width.
+ * @param {number} height - Rectangle's height.
+ * @returns {DOMRectInit}
+ */
+function createRectInit(x, y, width, height) {
+    return { x: x, y: y, width: width, height: height };
+}
+
+/**
+ * Class that is responsible for computations of the content rectangle of
+ * provided DOM element and for keeping track of it's changes.
+ */
+var ResizeObservation = /** @class */ (function () {
+    /**
+     * Creates an instance of ResizeObservation.
+     *
+     * @param {Element} target - Element to be observed.
+     */
+    function ResizeObservation(target) {
+        /**
+         * Broadcasted width of content rectangle.
+         *
+         * @type {number}
+         */
+        this.broadcastWidth = 0;
+        /**
+         * Broadcasted height of content rectangle.
+         *
+         * @type {number}
+         */
+        this.broadcastHeight = 0;
+        /**
+         * Reference to the last observed content rectangle.
+         *
+         * @private {DOMRectInit}
+         */
+        this.contentRect_ = createRectInit(0, 0, 0, 0);
+        this.target = target;
+    }
+    /**
+     * Updates content rectangle and tells whether it's width or height properties
+     * have changed since the last broadcast.
+     *
+     * @returns {boolean}
+     */
+    ResizeObservation.prototype.isActive = function () {
+        var rect = getContentRect(this.target);
+        this.contentRect_ = rect;
+        return (rect.width !== this.broadcastWidth ||
+            rect.height !== this.broadcastHeight);
+    };
+    /**
+     * Updates 'broadcastWidth' and 'broadcastHeight' properties with a data
+     * from the corresponding properties of the last observed content rectangle.
+     *
+     * @returns {DOMRectInit} Last observed content rectangle.
+     */
+    ResizeObservation.prototype.broadcastRect = function () {
+        var rect = this.contentRect_;
+        this.broadcastWidth = rect.width;
+        this.broadcastHeight = rect.height;
+        return rect;
+    };
+    return ResizeObservation;
+}());
+
+var ResizeObserverEntry = /** @class */ (function () {
+    /**
+     * Creates an instance of ResizeObserverEntry.
+     *
+     * @param {Element} target - Element that is being observed.
+     * @param {DOMRectInit} rectInit - Data of the element's content rectangle.
+     */
+    function ResizeObserverEntry(target, rectInit) {
+        var contentRect = createReadOnlyRect(rectInit);
+        // According to the specification following properties are not writable
+        // and are also not enumerable in the native implementation.
+        //
+        // Property accessors are not being used as they'd require to define a
+        // private WeakMap storage which may cause memory leaks in browsers that
+        // don't support this type of collections.
+        defineConfigurable(this, { target: target, contentRect: contentRect });
+    }
+    return ResizeObserverEntry;
+}());
+
+var ResizeObserverSPI = /** @class */ (function () {
+    /**
+     * Creates a new instance of ResizeObserver.
+     *
+     * @param {ResizeObserverCallback} callback - Callback function that is invoked
+     *      when one of the observed elements changes it's content dimensions.
+     * @param {ResizeObserverController} controller - Controller instance which
+     *      is responsible for the updates of observer.
+     * @param {ResizeObserver} callbackCtx - Reference to the public
+     *      ResizeObserver instance which will be passed to callback function.
+     */
+    function ResizeObserverSPI(callback, controller, callbackCtx) {
+        /**
+         * Collection of resize observations that have detected changes in dimensions
+         * of elements.
+         *
+         * @private {Array<ResizeObservation>}
+         */
+        this.activeObservations_ = [];
+        /**
+         * Registry of the ResizeObservation instances.
+         *
+         * @private {Map<Element, ResizeObservation>}
+         */
+        this.observations_ = new MapShim();
+        if (typeof callback !== 'function') {
+            throw new TypeError('The callback provided as parameter 1 is not a function.');
+        }
+        this.callback_ = callback;
+        this.controller_ = controller;
+        this.callbackCtx_ = callbackCtx;
+    }
+    /**
+     * Starts observing provided element.
+     *
+     * @param {Element} target - Element to be observed.
+     * @returns {void}
+     */
+    ResizeObserverSPI.prototype.observe = function (target) {
+        if (!arguments.length) {
+            throw new TypeError('1 argument required, but only 0 present.');
+        }
+        // Do nothing if current environment doesn't have the Element interface.
+        if (typeof Element === 'undefined' || !(Element instanceof Object)) {
+            return;
+        }
+        if (!(target instanceof getWindowOf(target).Element)) {
+            throw new TypeError('parameter 1 is not of type "Element".');
+        }
+        var observations = this.observations_;
+        // Do nothing if element is already being observed.
+        if (observations.has(target)) {
+            return;
+        }
+        observations.set(target, new ResizeObservation(target));
+        this.controller_.addObserver(this);
+        // Force the update of observations.
+        this.controller_.refresh();
+    };
+    /**
+     * Stops observing provided element.
+     *
+     * @param {Element} target - Element to stop observing.
+     * @returns {void}
+     */
+    ResizeObserverSPI.prototype.unobserve = function (target) {
+        if (!arguments.length) {
+            throw new TypeError('1 argument required, but only 0 present.');
+        }
+        // Do nothing if current environment doesn't have the Element interface.
+        if (typeof Element === 'undefined' || !(Element instanceof Object)) {
+            return;
+        }
+        if (!(target instanceof getWindowOf(target).Element)) {
+            throw new TypeError('parameter 1 is not of type "Element".');
+        }
+        var observations = this.observations_;
+        // Do nothing if element is not being observed.
+        if (!observations.has(target)) {
+            return;
+        }
+        observations.delete(target);
+        if (!observations.size) {
+            this.controller_.removeObserver(this);
+        }
+    };
+    /**
+     * Stops observing all elements.
+     *
+     * @returns {void}
+     */
+    ResizeObserverSPI.prototype.disconnect = function () {
+        this.clearActive();
+        this.observations_.clear();
+        this.controller_.removeObserver(this);
+    };
+    /**
+     * Collects observation instances the associated element of which has changed
+     * it's content rectangle.
+     *
+     * @returns {void}
+     */
+    ResizeObserverSPI.prototype.gatherActive = function () {
+        var _this = this;
+        this.clearActive();
+        this.observations_.forEach(function (observation) {
+            if (observation.isActive()) {
+                _this.activeObservations_.push(observation);
+            }
+        });
+    };
+    /**
+     * Invokes initial callback function with a list of ResizeObserverEntry
+     * instances collected from active resize observations.
+     *
+     * @returns {void}
+     */
+    ResizeObserverSPI.prototype.broadcastActive = function () {
+        // Do nothing if observer doesn't have active observations.
+        if (!this.hasActive()) {
+            return;
+        }
+        var ctx = this.callbackCtx_;
+        // Create ResizeObserverEntry instance for every active observation.
+        var entries = this.activeObservations_.map(function (observation) {
+            return new ResizeObserverEntry(observation.target, observation.broadcastRect());
+        });
+        this.callback_.call(ctx, entries, ctx);
+        this.clearActive();
+    };
+    /**
+     * Clears the collection of active observations.
+     *
+     * @returns {void}
+     */
+    ResizeObserverSPI.prototype.clearActive = function () {
+        this.activeObservations_.splice(0);
+    };
+    /**
+     * Tells whether observer has active observations.
+     *
+     * @returns {boolean}
+     */
+    ResizeObserverSPI.prototype.hasActive = function () {
+        return this.activeObservations_.length > 0;
+    };
+    return ResizeObserverSPI;
+}());
+
+// Registry of internal observers. If WeakMap is not available use current shim
+// for the Map collection as it has all required methods and because WeakMap
+// can't be fully polyfilled anyway.
+var observers = typeof WeakMap !== 'undefined' ? new WeakMap() : new MapShim();
+/**
+ * ResizeObserver API. Encapsulates the ResizeObserver SPI implementation
+ * exposing only those methods and properties that are defined in the spec.
+ */
+var ResizeObserver = /** @class */ (function () {
+    /**
+     * Creates a new instance of ResizeObserver.
+     *
+     * @param {ResizeObserverCallback} callback - Callback that is invoked when
+     *      dimensions of the observed elements change.
+     */
+    function ResizeObserver(callback) {
+        if (!(this instanceof ResizeObserver)) {
+            throw new TypeError('Cannot call a class as a function.');
+        }
+        if (!arguments.length) {
+            throw new TypeError('1 argument required, but only 0 present.');
+        }
+        var controller = ResizeObserverController.getInstance();
+        var observer = new ResizeObserverSPI(callback, controller, this);
+        observers.set(this, observer);
+    }
+    return ResizeObserver;
+}());
+// Expose public methods of ResizeObserver.
+[
+    'observe',
+    'unobserve',
+    'disconnect'
+].forEach(function (method) {
+    ResizeObserver.prototype[method] = function () {
+        var _a;
+        return (_a = observers.get(this))[method].apply(_a, arguments);
+    };
+});
+
+var index = (function () {
+    // Export existing implementation if available.
+    if (typeof global$1.ResizeObserver !== 'undefined') {
+        return global$1.ResizeObserver;
+    }
+    return ResizeObserver;
+})();
+
+/* harmony default export */ __webpack_exports__["default"] = (index);
+
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
+
+/***/ }),
+
+/***/ "./node_modules/template-polyfill/index.js":
+/*!*************************************************!*\
+  !*** ./node_modules/template-polyfill/index.js ***!
+  \*************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+function templatePolyfill() {
+  if ('content' in document.createElement('template')) {
+    return false;
+  }
+
+  var templates = document.getElementsByTagName('template');
+  var plateLen = templates.length;
+
+  for (var x = 0; x < plateLen; ++x) {
+    var template = templates[x];
+    var content = template.childNodes;
+    var fragment = document.createDocumentFragment();
+
+    while (content[0]) {
+      fragment.appendChild(content[0]);
+    }
+
+    template.content = fragment;
+  }
+}
+
+module.exports = templatePolyfill;
+
+
+/***/ }),
+
+/***/ "./node_modules/webpack/buildin/global.js":
+/*!***********************************!*\
+  !*** (webpack)/buildin/global.js ***!
+  \***********************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+var g;
+
+// This works in non-strict mode
+g = (function() {
+	return this;
+})();
+
+try {
+	// This works if eval is allowed (see CSP)
+	g = g || Function("return this")() || (1, eval)("this");
+} catch (e) {
+	// This works if the window reference is available
+	if (typeof window === "object") g = window;
+}
+
+// g can still be undefined, but nothing to do about it...
+// We return undefined, instead of nothing here, so it's
+// easier to handle this case. if(!global) { ...}
+
+module.exports = g;
+
+
+/***/ }),
+
 /***/ "./src/data.js":
 /*!*********************!*\
   !*** ./src/data.js ***!
@@ -124,14 +1133,9 @@ var Data = function () {
   function Data(data, cb) {
     _classCallCheck(this, Data);
 
-    this.method = null;
     this.data = data;
     this.cb = cb;
-
-    if (typeof data === 'function') {
-      this.method = data;
-      this.data = data();
-    }
+    this.watchers = [];
   }
 
   _createClass(Data, [{
@@ -146,12 +1150,6 @@ var Data = function () {
       var oldVal = this.data;
       var watcher = this.cb();
 
-      if (this.method) {
-        newVal = this.method(val);
-      } else {
-        newVal = val;
-      }
-
       if (newVal === oldVal) {
         return;
       }
@@ -159,9 +1157,9 @@ var Data = function () {
       this.data = newVal;
 
       if (watcher) {
-        _utils2.default.debounce(function () {
-          watcher(newVal, oldVal);
-        })();
+        _utils2.default.nextFrame(function () {
+          return watcher(newVal, oldVal);
+        });
       }
     }
   }]);
@@ -170,6 +1168,87 @@ var Data = function () {
 }();
 
 exports.default = Data;
+module.exports = exports['default'];
+
+/***/ }),
+
+/***/ "./src/descriptor.js":
+/*!***************************!*\
+  !*** ./src/descriptor.js ***!
+  \***************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Descriptor = function () {
+  function Descriptor(value, watcher, setable) {
+    var _this = this;
+
+    _classCallCheck(this, Descriptor);
+
+    this.watchers = watcher ? [watcher] : [];
+    this.setable = setable === undefined ? true : setable;
+
+    if (typeof value === 'function') {
+      this.computer = value;
+      this.value = null;
+    } else {
+      this.value = value;
+    }
+
+    return {
+      get: function get() {
+        if (_this.computer) {
+          _this.value = _this.computer.apply(_this);
+        }
+        return _this.value;
+      },
+      set: function set(value) {
+        if (_this.setable) {
+          if (_this.value === value) return;
+
+          if (typeof _this.computer === 'function') {
+            _this.value = _this.computer.apply(_this, [value]);
+          } else {
+            _this.value = value;
+          }
+          _this.update();
+        }
+      },
+      addWatcher: function addWatcher(fn) {
+        _this.watchers.push(fn);
+      },
+      writeable: true,
+      enumerable: true,
+      configurable: false
+    };
+  }
+
+  _createClass(Descriptor, [{
+    key: 'update',
+    value: function update() {
+      var _this2 = this;
+
+      this.watchers.forEach(function (watcher) {
+        watcher.apply(null, [_this2.value]);
+      });
+    }
+  }]);
+
+  return Descriptor;
+}();
+
+exports.default = Descriptor;
 module.exports = exports['default'];
 
 /***/ }),
@@ -212,9 +1291,9 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _model = __webpack_require__(/*! ./model */ "./src/model.js");
+var _vnode = __webpack_require__(/*! ./vnode */ "./src/vnode.js");
 
-var _model2 = _interopRequireDefault(_model);
+var _vnode2 = _interopRequireDefault(_vnode);
 
 var _utils = __webpack_require__(/*! ./utils */ "./src/utils.js");
 
@@ -223,6 +1302,10 @@ var _utils2 = _interopRequireDefault(_utils);
 var _global = __webpack_require__(/*! ./global */ "./src/global.js");
 
 var _global2 = _interopRequireDefault(_global);
+
+var _templatePolyfill = __webpack_require__(/*! template-polyfill */ "./node_modules/template-polyfill/index.js");
+
+var _templatePolyfill2 = _interopRequireDefault(_templatePolyfill);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -240,10 +1323,12 @@ var Symbiotic = function () {
     _createClass(Symbiotic, [{
         key: 'attach',
         value: function attach(el) {
-            var _this = this;
-
             var $scope = _utils2.default.getScope(el);
             _global2.default.head = _utils2.default.findHead($scope);
+
+            if (!'content' in document.createElement('template')) {
+                this.boostrapTemplates(_global2.default.head);
+            }
 
             ;(function (cb) {
                 if (document.readyState !== 'loading') {
@@ -255,13 +1340,26 @@ var Symbiotic = function () {
                 }
             })(function () {
                 var t0 = performance.now();
-                _this.vnom = new _model2.default($scope, _global2.default.data);
+                var vnode = new _vnode2.default($scope);
 
-                _utils2.default.init(_this.vnom);
+                vnode.class = "changed";
+
+                _utils2.default.init(vnode);
 
                 var t1 = performance.now();
                 console.log('Symbiote attached in ' + (t1 - t0) + ' milliseconds.');
             });
+        }
+    }, {
+        key: 'boostrapTemplates',
+        value: function boostrapTemplates(head) {
+            var polyfillStyle = _utils2.default.createStyleNode();
+            var polyfillScript = document.createElement('script');
+            polyfillScript.innerText = 'document.createElement("template")';
+            polyfillStyle.innerHTML = 'template { display: none !important};';
+            head.appendChild(polyfillStyle);
+            head.appendChild(polyfillScript);
+            (0, _templatePolyfill2.default)();
         }
     }]);
 
@@ -318,6 +1416,8 @@ var _textNode2 = _interopRequireDefault(_textNode);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Model = function () {
@@ -333,8 +1433,8 @@ var Model = function () {
         this.lastChild = null;
         this.next = null;
         this.prev = null;
+        this.cloned = {};
         this.$node = $node;
-        this.tagName = $node.tagName.toLowerCase();
         this.id = $node.getAttribute('id') || _utils2.default.uid();
         this.show = true;
         this.textNodes = [];
@@ -363,7 +1463,7 @@ var Model = function () {
             prepend: this.prepend.bind(this),
             find: this.find.bind(this),
             findParent: this.findParent.bind(this),
-            render: this.render.bind(this),
+            // render: this.render.bind(this),
             plugins: this.plugins.bind(this),
             extend: this.extend.bind(this),
             watch: this.watch.bind(this)
@@ -373,22 +1473,26 @@ var Model = function () {
             $node.setAttribute('id', this.id);
         }
 
-        if (this.tagName === 'template') {
-            this.template = _utils2.default.getTemplateNode($node);
-            this.model.template = this.template;
-        }
-
         Object.defineProperty(this.model, 'id', {
             get: function get() {
                 return _this.id;
             }
         });
 
-        Object.defineProperty(this.model, 'tagName', {
-            get: function get() {
-                return _this.tagName;
-            }
-        });
+        if ($node.tagName) {
+            this.tagName = $node.tagName.toLowerCase();
+
+            Object.defineProperty(this.model, 'tagName', {
+                get: function get() {
+                    return _this.tagName;
+                }
+            });
+        }
+
+        if (this.tagName === 'template') {
+            this.$template = _utils2.default.getTemplateNode($node);
+            this.model.$template = this.$template;
+        }
 
         Object.defineProperty(this.model, 'show', {
             get: function get() {
@@ -454,7 +1558,7 @@ var Model = function () {
             },
             set: function set(states) {
                 _this.states = states;
-                _this.update();
+                _this.updateState();
             }
         });
 
@@ -465,7 +1569,7 @@ var Model = function () {
             set: function set(state) {
                 if (_this.state !== state) {
                     _this.state = state;
-                    _this.update();
+                    _this.updateState();
                 }
             }
         });
@@ -494,11 +1598,11 @@ var Model = function () {
         }
 
         this.$node.addEventListener('mouseover', function () {
-            _this.update('hover');
+            _this.updateState('hover');
         });
 
         this.$node.addEventListener('mouseout', function () {
-            _this.update();
+            _this.updateState();
         });
 
         _utils2.default.check($node.attributes, function (attributes) {
@@ -510,20 +1614,49 @@ var Model = function () {
                     _this[attrName] = $attrValue;
                     _global2.default.vdom[_this.id][attrName] = $attrValue;
 
-                    Object.defineProperty(_this.model, attrName, {
-                        get: function get() {
-                            return _this[attrName];
-                        },
-                        set: function set(val) {
-                            if (_this[attrName] !== val) {
-                                _this[attrName] = val;
+                    if (~$attrValue.indexOf('${')) {
+                        $attrValue.replace(_utils2.default.mustacheRegex, function (match, variable) {
 
-                                ;_utils2.default.debounce(function ($node) {
-                                    $node.setAttribute(_utils2.default.camelCaseToDash(attrName), _this[attrName]);
-                                })($node);
+                            var refs = variable.split('.');
+
+                            (function loop(obj, store, refs, index) {
+                                var key = refs[index];
+                                if (index < refs.length - 1) {
+                                    obj[key] = {};
+                                    store[key] = {};
+                                    index++;
+                                    loop(obj[key], store[key], refs, index);
+                                } else {
+                                    store[key] = $attrValue;
+                                    Object.defineProperty(obj, key, {
+                                        get: function get() {
+                                            return store[key];
+                                        },
+                                        set: function set(val) {
+                                            ;_utils2.default.debounce(function ($node) {
+                                                $node.setAttribute(_utils2.default.camelCaseToDash(attrName), store[key].replace(match, val));
+                                            })($node);
+                                        }
+                                    });
+                                }
+                            })(_this.model, _this, refs, 0);
+                        });
+                    } else {
+                        Object.defineProperty(_this.model, attrName, {
+                            get: function get() {
+                                return _this[attrName];
+                            },
+                            set: function set(val) {
+                                if (_this[attrName] !== val) {
+                                    _this[attrName] = val;
+
+                                    ;_utils2.default.debounce(function ($node) {
+                                        $node.setAttribute(_utils2.default.camelCaseToDash(attrName), _this[attrName]);
+                                    })($node);
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
                 }
             });
         });
@@ -561,14 +1694,64 @@ var Model = function () {
             Object.defineProperty(this.model, data, {
                 set: function set(vals) {
                     _this[data] = vals;
-                    _this.updateTextNodes(vals, key);
+                    _utils2.default.check(vals, function (vals) {
+                        _this.cloneNodes(vals, key);
+                    });
                 },
                 get: function get() {
-                    _this.updateTextNodes(_this[data], key);
                     return _this[data];
                 }
             });
         }
+
+        new ResizeObserver(function (entries, observer) {
+            var _iteratorNormalCompletion = true;
+            var _didIteratorError = false;
+            var _iteratorError = undefined;
+
+            try {
+                for (var _iterator = entries[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                    var entry = _step.value;
+                    var _entry$contentRect = entry.contentRect,
+                        left = _entry$contentRect.left,
+                        top = _entry$contentRect.top,
+                        width = _entry$contentRect.width,
+                        height = _entry$contentRect.height;
+
+                    console.log(left, top, width, height);
+                    _this.width = width;
+                    _this.height = height;
+                    _this.top = top;
+                    _this.left = left;
+                }
+            } catch (err) {
+                _didIteratorError = true;
+                _iteratorError = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion && _iterator.return) {
+                        _iterator.return();
+                    }
+                } finally {
+                    if (_didIteratorError) {
+                        throw _iteratorError;
+                    }
+                }
+            }
+        }).observe(this.$node);
+
+        var pos = ['top', 'left', 'width', 'height'];
+
+        pos.forEach(function (p) {
+            Object.defineProperty(_this.model, p, {
+                get: function get() {
+                    return _this[p];
+                },
+                set: function set(val) {
+                    _this.style[p] = val;
+                }
+            });
+        });
 
         if (_global2.default.plugins !== null) {
             this.plugins(_global2.default.plugins);
@@ -614,6 +1797,44 @@ var Model = function () {
             return node;
         }
     }, {
+        key: 'cloneNodes',
+        value: function cloneNodes(vals, key) {
+            var _this4 = this;
+
+            _utils2.default.debounce(function () {
+                _utils2.default.loop(vals, function (val, k) {
+                    var $cloned = _this4.$template.children[0].cloneNode(true);
+                    var cloned = _this4.parent.append($cloned);
+
+                    if (cloned.data === key) {
+                        _this4.cloned[key].extend(val);
+                        _this4.cloned[key].textNodes.forEach(function (textNode) {
+                            textNode.update();
+                        });
+                    }
+
+                    cloned.find(key, function (node) {
+                        (function loop(node, data) {
+
+                            _utils2.default.loop(data, function (v, k) {
+                                if (k in node) {
+                                    if ((typeof v === 'undefined' ? 'undefined' : _typeof(v)) !== 'object') {
+                                        node[k] = v;
+                                    } else {
+                                        loop(node[k], v);
+                                    }
+                                } else {
+                                    if (typeof node.extend === 'function') {
+                                        node.extend(_defineProperty({}, k, v));
+                                    }
+                                }
+                            });
+                        })(node[key], val);
+                    });
+                });
+            })();
+        }
+    }, {
         key: 'emit',
         value: function emit(event, payload) {
             var bubbles = true;
@@ -632,7 +1853,7 @@ var Model = function () {
                 }
             }
 
-            this.update(event);
+            this.updateState(event);
 
             if (bubbles && this.parent) {
                 this.parent.emit(event, payload);
@@ -648,20 +1869,31 @@ var Model = function () {
                             throw 'Key on model cannot be redefined';
                         }
 
-                        var Proxy = new _data2.default(value, function () {
-                            return ctx.watchers[key] || null;
-                        });
+                        if (typeof value === 'function') {
+                            var _Proxy = new _data2.default(value.bind(model), function () {
+                                return ctx.watchers[key] || null;
+                            });
 
-                        if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object') {
+                            Object.defineProperty(model, key, {
+                                get: function get() {
+                                    return _Proxy.get();
+                                },
+                                configurable: true
+                            });
+                        } else if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object') {
                             model[key] = model[key] || {};
                             loop(model[key], value);
                         } else {
+                            var _Proxy2 = new _data2.default(value, function () {
+                                return ctx.watchers[key] || null;
+                            });
+
                             Object.defineProperty(model, key, {
                                 get: function get() {
-                                    return Proxy.get();
+                                    return _Proxy2.get();
                                 },
                                 set: function set(val) {
-                                    Proxy.set(val);
+                                    _Proxy2.set(val);
                                 },
                                 configurable: true
                             });
@@ -679,7 +1911,10 @@ var Model = function () {
 
             (function dig(vnode) {
                 if (vnode) {
-                    if (vnode[attrName] !== undefined && vnode[attrName].indexOf(value) > -1) {
+                    if (vnode[attrName] !== undefined && typeof value === 'function') {
+                        value(vnode);
+                        result.push(vnode);
+                    } else if (vnode[attrName] !== undefined && vnode[attrName].split(' ').includes(value)) {
                         if (typeof cb === 'function') {
                             cb(vnode);
                         }
@@ -707,7 +1942,7 @@ var Model = function () {
 
             (function dig(vnode) {
                 if (vnode) {
-                    if (vnode[attrName] !== undefined && vnode[attrName].indexOf(value) > -1) {
+                    if (vnode[attrName] !== undefined && vnode[attrName].split(' ').includes(value)) {
                         if (typeof cb === 'function') {
                             cb(vnode);
                         }
@@ -743,7 +1978,7 @@ var Model = function () {
     }, {
         key: 'plugins',
         value: function plugins(Plugins) {
-            var _this4 = this;
+            var _this5 = this;
 
             if (!Plugins.length > 0) {
                 return null;
@@ -751,14 +1986,14 @@ var Model = function () {
 
             _utils2.default.check(Plugins, function () {
                 return _utils2.default.loop(Plugins, function (Plugin) {
-                    new Plugin(_this4.model);
+                    _this5.extend(new Plugin(_this5));
                 });
             });
         }
     }, {
         key: 'prepend',
         value: function prepend($node, methods) {
-            var _this5 = this;
+            var _this6 = this;
 
             var node = new Model($node);
             node.parent = this.model;
@@ -771,7 +2006,7 @@ var Model = function () {
             this.firstChild = node;
 
             _utils2.default.debounce(function () {
-                _this5.$node.prepend(node.$node);
+                _this6.$node.prepend(node.$node);
                 _utils2.default.init(node, methods);
             })();
 
@@ -780,7 +2015,7 @@ var Model = function () {
     }, {
         key: 'render',
         value: function render(args) {
-            var _this6 = this;
+            var _this7 = this;
 
             if (!args.template && this.tagName !== 'template') {
                 return;
@@ -805,19 +2040,19 @@ var Model = function () {
 
             return _utils2.default.check(frag.children, function ($children) {
                 return _utils2.default.loop($children, function ($child) {
-                    if (_this6.tagName === 'template') {
-                        if (_this6.parent !== undefined) {
-                            return _this6.parent.append($child, methods);
+                    if (_this7.tagName === 'template') {
+                        if (_this7.parent !== undefined) {
+                            return _this7.parent.append($child, methods);
                         }
                     } else {
-                        return _this6.append($child, methods);
+                        return _this7.append($child, methods);
                     }
                 });
             });
         }
     }, {
-        key: 'update',
-        value: function update(event) {
+        key: 'updateState',
+        value: function updateState(event) {
             event = event || null;
             var state = null;
             var next = null;
@@ -830,7 +2065,7 @@ var Model = function () {
             state = this.states[this.state];
 
             if (!event) {
-                update(state);
+                _update(state);
                 return;
             }
 
@@ -851,9 +2086,9 @@ var Model = function () {
                 next = state.on[event];
             }
 
-            update(next);
+            _update(next);
 
-            function update(values) {
+            function _update(values) {
                 _utils2.default.loop(values, function (value, key) {
                     if (key !== 'on') {
                         if (typeof value === 'function') {
@@ -868,50 +2103,50 @@ var Model = function () {
     }, {
         key: 'updateStyles',
         value: function updateStyles() {
-            var _this7 = this;
+            var _this8 = this;
 
             _utils2.default.debounce(function () {
-                if (!_utils2.default.check(_this7.style)) {
-                    _this7.$styleNode.innerHTML = '';
+                if (!_utils2.default.check(_this8.style)) {
+                    _this8.$styleNode.innerHTML = '';
                     return;
                 }
 
-                var styleString = '#' + _this7.id + '{';
+                var styleString = '#' + _this8.id + '{';
 
-                _utils2.default.loop(_this7.style, function (value, prop) {
+                _utils2.default.loop(_this8.style, function (value, prop) {
                     styleString += _utils2.default.camelCaseToDash(prop) + ':' + value + ';';
                 });
 
                 styleString += '}';
 
-                if (_this7.$styleNode.parentNode === null) {
-                    _global2.default.head.appendChild(_this7.$styleNode);
+                if (_this8.$styleNode.parentNode === null) {
+                    _global2.default.head.appendChild(_this8.$styleNode);
                 }
 
-                _this7.$styleNode.innerHTML = styleString;
+                _this8.$styleNode.innerHTML = styleString;
             })();
         }
     }, {
         key: 'updateTextNodes',
         value: function updateTextNodes(vals, key) {
-            var _this8 = this;
+            var _this9 = this;
 
             _utils2.default.debounce(function () {
                 _utils2.default.loop(vals, function (val, k) {
-                    if (_this8.cloned[k] === undefined) {
-                        var $clonedNode = _this8.$node.content.children[0].cloneNode(true);
-                        _this8.cloned[k] = _this8.parent.append($clonedNode);
+                    if (_this9.cloned[k] === undefined) {
+                        var $clonedNode = _this9.$node.content.children[0].cloneNode(true);
+                        _this9.cloned[k] = _this9.parent.append($clonedNode);
                     }
 
-                    if (_this8.cloned[k].data && _this8.cloned[k].data === key) {
-                        _this8.cloned[k][key] = val;
+                    if (_this9.cloned[k].data && _this9.cloned[k].data === key) {
+                        _this9.cloned[k][key] = val;
 
-                        _this8.cloned[k].textNodes.forEach(function (textNode) {
+                        _this9.cloned[k].textNodes.forEach(function (textNode) {
                             textNode.update();
                         });
                     }
 
-                    _this8.cloned[k].find('data', key, function (found) {
+                    _this9.cloned[k].find('data', key, function (found) {
                         found[key] = val;
 
                         found.textNodes.forEach(function (textNode) {
@@ -1018,24 +2253,34 @@ var _class = function () {
 
     _classCallCheck(this, _class);
 
+    var ctx = this;
     this.$node = $node;
     this.originalContent = $node.textContent;
-    this.keys = [];
     this.model = model;
     this.data = {};
 
     this.replace(function (variable) {
-      Object.defineProperty(model, variable, {
-        get: function get() {
-          return _this.data[variable];
-        },
-        set: function set(val) {
-          _this.data[variable] = val;_utils2.default.debounce(function () {
-            _this.update();
-          })();
+      (function loop(model, refs, index) {
+        var key = refs[index];
+        if (index < refs.length - 1) {
+          model[key] = {};
+          index++;
+          loop(model[key], refs, index);
+        } else {
+          Object.defineProperty(model, key, {
+            get: function get() {
+              return ctx.data;
+            },
+            set: function set(val) {
+              ctx.data = val;_utils2.default.debounce(function () {
+                ctx.update();
+              })();
+            },
+            configurable: true
+          });
         }
-      });
-      _this.keys.push(variable);
+      })(_this.model, variable.split('.'), 0);
+
       return _utils2.default.stringRef(variable, model);
     });
   }
@@ -1095,7 +2340,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 exports.default = {
     id: 0,
     prefix: 'vnom-',
-    mustacheRegex: /\$\{\s?(\w.+)\s?\}/g,
+    mustacheRegex: /\${\s*([\w\.]+)\s*}/g,
     camelCaseToDash: function camelCaseToDash(myStr) {
         return myStr.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
     },
@@ -1127,6 +2372,12 @@ exports.default = {
                 func.apply(context, args);
             });
         };
+    },
+    nextFrame: function nextFrame(fn) {
+        var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
+        requestAnimationFrame(function () {
+            fn();
+        });
     },
     isNode: function isNode(o) {
         return (typeof Node === 'undefined' ? 'undefined' : _typeof(Node)) === "object" ? o instanceof Node : o && (typeof o === 'undefined' ? 'undefined' : _typeof(o)) === "object" && typeof o.nodeType === "number" && typeof o.nodeName === "string";
@@ -1197,17 +2448,19 @@ exports.default = {
     getTemplateNode: function getTemplateNode($node, cb) {
         if ($node.tagName === 'TEMPLATE') {
             if (typeof cb === 'function') {
-                return cb.apply(null, [$node.innerHTML]);
+                return cb.apply(null, [$node.content]);
             }
-            return $node.innerHTML;
+            return $node.content;
         }
     },
     stringRef: function stringRef(ref, object) {
         return ref.split('.').reduce(function (object, i) {
-            if (object[i]) {
-                return object[i];
-            } else {
-                return '';
+            if (object) {
+                if (object[i]) {
+                    return object[i];
+                } else {
+                    return null;
+                }
             }
         }, object);
     },
@@ -1251,8 +2504,8 @@ exports.default = {
             }
         }
 
-        if (vnom.child) {
-            this.init(vnom.child, methods);
+        if (vnom.firstChild) {
+            this.init(vnom.firstChild, methods);
         }
 
         if (vnom.next) {
@@ -1287,6 +2540,492 @@ exports.default = {
         }
     }
 };
+module.exports = exports['default'];
+
+/***/ }),
+
+/***/ "./src/vnode.js":
+/*!**********************!*\
+  !*** ./src/vnode.js ***!
+  \**********************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _vnom = __webpack_require__(/*! ./vnom */ "./src/vnom.js");
+
+var _vnom2 = _interopRequireDefault(_vnom);
+
+var _utils = __webpack_require__(/*! ./utils */ "./src/utils.js");
+
+var _utils2 = _interopRequireDefault(_utils);
+
+var _textNode = __webpack_require__(/*! ./textNode */ "./src/textNode.js");
+
+var _textNode2 = _interopRequireDefault(_textNode);
+
+var _resizeObserverPolyfill = __webpack_require__(/*! resize-observer-polyfill */ "./node_modules/resize-observer-polyfill/dist/ResizeObserver.es.js");
+
+var _resizeObserverPolyfill2 = _interopRequireDefault(_resizeObserverPolyfill);
+
+var _descriptor = __webpack_require__(/*! ./descriptor */ "./src/descriptor.js");
+
+var _descriptor2 = _interopRequireDefault(_descriptor);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Vnode = function () {
+  function Vnode($node) {
+    var _this = this;
+
+    _classCallCheck(this, Vnode);
+
+    var vnom = new _vnom2.default($node);
+
+    this._vnom = vnom;
+
+    _utils2.default.check($node.childNodes, function ($children) {
+      return _utils2.default.loop($children, function ($child) {
+        if ($child.nodeType === 1) {
+          var child = new Vnode($child);
+          child.parent = _this;
+
+          if (vnom.lastChild.get()) {
+            vnom.lastChild.get().next = child;
+            child.prev = vnom.lastChild.get();
+          } else {
+            vnom.firstChild.set(child);
+          }
+
+          vnom.lastChild.set(child);
+        }
+      });
+    });
+
+    Object.defineProperties(this, vnom);
+  }
+
+  _createClass(Vnode, [{
+    key: '$event',
+    value: function $event(event, cb, useCapture) {
+      var _this2 = this;
+
+      useCapture = useCapture || false;
+      this.$node.addEventListener(event, function (e) {
+        return cb.apply(_this2, [e]);
+      }, useCapture);
+    }
+  }, {
+    key: 'append',
+    value: function append($node, methods) {
+      var _this3 = this;
+
+      var node = new Vnode($node);
+      node.parent = this;
+
+      if (!this.firstChild) {
+        this.firstChild = node;
+      }
+
+      if (this.lastChild) {
+        node.prev = this.lastChild;
+        this.lastChild.next = node;
+      }
+
+      this.lastChild = node;
+
+      _utils2.default.nextFrame(function () {
+        _this3.$node.appendChild(node.$node);
+        _utils2.default.init(node, methods);
+      });
+
+      return node;
+    }
+  }, {
+    key: 'extend',
+    value: function extend(data) {
+      ;(function loop(ctx, data) {
+        _utils2.default.check(data, function (data) {
+          return _utils2.default.loop(data, function (value, key) {
+            if (key in ctx) {
+              if (typeof value === 'function') {
+                ctx[key] = value();
+              } else if (typeof value === 'array') {
+                ctx[key] = value;
+              } else if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object') {} else {
+                ctx[key] = value;
+              }
+            } else if (typeof value === 'function') {
+              Object.defineProperty(ctx, key, new _descriptor2.default(value));
+            } else if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object') {
+              if ('value' in value) {
+                if ('watcher' in value) {
+                  Object.defineProperty(ctx, key, new _descriptor2.default(value.value, value.watcher));
+                } else {
+                  Object.defineProperty(ctx, key, new _descriptor2.default(value.value));
+                }
+              } else {
+                ctx[key] = {};
+                loop(ctx[key], value);
+              }
+            } else {
+              Object.defineProperty(ctx, key, new _descriptor2.default(value));
+            }
+          });
+        });
+      })(this, data);
+    }
+  }]);
+
+  return Vnode;
+}();
+
+exports.default = Vnode;
+module.exports = exports['default'];
+
+/***/ }),
+
+/***/ "./src/vnom.js":
+/*!*********************!*\
+  !*** ./src/vnom.js ***!
+  \*********************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _descriptor = __webpack_require__(/*! ./descriptor */ "./src/descriptor.js");
+
+var _descriptor2 = _interopRequireDefault(_descriptor);
+
+var _global = __webpack_require__(/*! ./global */ "./src/global.js");
+
+var _global2 = _interopRequireDefault(_global);
+
+var _utils = __webpack_require__(/*! ./utils */ "./src/utils.js");
+
+var _utils2 = _interopRequireDefault(_utils);
+
+var _vtext = __webpack_require__(/*! ./vtext */ "./src/vtext.js");
+
+var _vtext2 = _interopRequireDefault(_vtext);
+
+var _vstyle = __webpack_require__(/*! ./vstyle */ "./src/vstyle.js");
+
+var _vstyle2 = _interopRequireDefault(_vstyle);
+
+var _resizeObserverPolyfill = __webpack_require__(/*! resize-observer-polyfill */ "./node_modules/resize-observer-polyfill/dist/ResizeObserver.es.js");
+
+var _resizeObserverPolyfill2 = _interopRequireDefault(_resizeObserverPolyfill);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Vnom = function Vnom($node) {
+  _classCallCheck(this, Vnom);
+
+  var props = {};
+  var id = $node.getAttribute('id') || _utils2.default.uid();
+
+  props.$node = new _descriptor2.default($node);
+  props.id = new _descriptor2.default(id);
+  props.tagName = new _descriptor2.default($node.tagName.toLowerCase());
+  props.parent = new _descriptor2.default(null);
+  props.firstChild = new _descriptor2.default(null);
+  props.lastChild = new _descriptor2.default(null);
+  props.next = new _descriptor2.default(null);
+  props.prev = new _descriptor2.default(null);
+
+  if ($node.getAttribute('id') !== id) {
+    $node.setAttribute('id', id);
+  }
+
+  props.show = new _descriptor2.default($node.style.display !== 'none', function (show) {
+    if (show) {
+      if ($node.style.removeProperty) {
+        $node.style.removeProperty('display');
+      } else {
+        $node.style.removeAttribute('display');
+      }
+    } else {
+      $node.style.display = 'none';
+    }
+  });
+
+  props.style = new _vstyle2.default(id, $node);
+
+  props.class = new _descriptor2.default($node.getAttribute('class'), function (classList) {
+    _utils2.default.nextFrame(function () {
+      return $node.setAttribute('class', classList);
+    });
+  });
+
+  _utils2.default.check($node.attributes, function (attributes) {
+    return _utils2.default.loop(attributes, function (attribute) {
+      var attrName = _utils2.default.dashToCamelCase(attribute.nodeName);
+      var $attrValue = attribute.nodeValue;
+
+      if (!props[attrName] && attrName !== 'id' && attrName !== 'for') {
+        props[attrName] = new _descriptor2.default($attrValue, function (attrValue) {
+          _utils2.default.nextFrame(function () {
+            return $node.setAttribute(_utils2.default.camelCaseToDash(attrName), attrValue);
+          });
+        });
+      }
+    });
+  });
+
+  _utils2.default.check($node.childNodes, function ($children) {
+    return _utils2.default.loop($children, function ($child) {
+      if ($child.nodeType === 3) {
+        if ($child.nodeValue.trim().length > 0) {
+          if ($child.nodeValue.match(_utils2.default.mustacheRegex)) {
+            Object.assign(props, new _vtext2.default($child));
+          }
+        }
+      }
+    });
+  });
+
+  return props;
+};
+
+exports.default = Vnom;
+module.exports = exports['default'];
+
+/***/ }),
+
+/***/ "./src/vstyle.js":
+/*!***********************!*\
+  !*** ./src/vstyle.js ***!
+  \***********************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _utils = __webpack_require__(/*! ./utils */ "./src/utils.js");
+
+var _utils2 = _interopRequireDefault(_utils);
+
+var _descriptor = __webpack_require__(/*! ./descriptor */ "./src/descriptor.js");
+
+var _descriptor2 = _interopRequireDefault(_descriptor);
+
+var _global = __webpack_require__(/*! ./global */ "./src/global.js");
+
+var _global2 = _interopRequireDefault(_global);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var _class = function _class(id) {
+  _classCallCheck(this, _class);
+
+  var $styleNode = _utils2.default.createStyleNode();
+  var updateStyles = _utils2.default.debounce(function (styles) {
+    updateStyleNode(styles);
+  });
+
+  var style = new _descriptor2.default(function (values) {
+    if (!values) {
+      updateStyles(this.value);
+      return this.value || {};
+    }
+
+    return values;
+  }, function (vals) {
+    _utils2.default.nextFrame(function () {
+      return updateStyleNode(vals);
+    });
+  });
+
+  function updateStyleNode(styles) {
+    if (!_utils2.default.check(styles)) {
+      $styleNode.innerHTML = '';
+      return;
+    }
+
+    var styleString = '#' + id + '{';
+
+    _utils2.default.loop(styles, function (value, prop) {
+      styleString += _utils2.default.camelCaseToDash(prop) + ':' + value + ';';
+    });
+
+    styleString += '}';
+
+    if ($styleNode.parentNode === null) {
+      _global2.default.head.appendChild($styleNode);
+    }
+
+    $styleNode.innerHTML = styleString;
+  }
+
+  return style;
+};
+
+exports.default = _class;
+module.exports = exports['default'];
+
+/***/ }),
+
+/***/ "./src/vtext.js":
+/*!**********************!*\
+  !*** ./src/vtext.js ***!
+  \**********************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var _utils = __webpack_require__(/*! ./utils */ "./src/utils.js");
+
+var _utils2 = _interopRequireDefault(_utils);
+
+var _descriptor = __webpack_require__(/*! ./descriptor */ "./src/descriptor.js");
+
+var _descriptor2 = _interopRequireDefault(_descriptor);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var _class = function _class($node) {
+  _classCallCheck(this, _class);
+
+  var $originalContent = $node.nodeValue;
+  var refs = $originalContent.match(_utils2.default.mustacheRegex).map(function (match) {
+    return match.match(/[\w\.]+/)[0];
+  });
+
+  var props = {};
+
+  update($node, $originalContent, props);
+
+  console.log(refs);
+
+  _utils2.default.loop(refs, function (ref) {
+    (function loop(object, array, index) {
+      var key = array[index];
+      var length = array.length;
+
+      if (key in object) {
+        index++;
+
+        if (index < length) {
+          if (typeof object[key].get === 'function') {
+            loop(object[key].get(), array, index);
+          } else {
+            loop(object[key], array, index);
+          }
+        }
+      } else {
+        if (index === 0) {
+          object[key] = new _descriptor2.default(function (val) {
+            if (!val) {
+              return this.value || {};
+            }
+            return val;
+          }, function (val) {
+            update($node, $originalContent, props);
+          });
+          index++;
+          if (index < length) {
+            if (typeof object[key].get === 'function') {
+              loop(object[key].get(), array, index);
+            } else {
+              loop(object[key], array, index);
+            }
+          }
+        } else {
+          Object.defineProperty(object, key, new _descriptor2.default(function (val) {
+            if (!val) {
+              return this.value || {};
+            } else {
+              if (typeof val === 'function') {} else if ((typeof val === 'undefined' ? 'undefined' : _typeof(val)) === 'object') {
+                for (var k in val) {
+                  if (k in object[key]) {
+                    object[key][k] = val[k];
+                  }
+                }
+              } else {
+                update($node, $originalContent, props);
+              }
+              return val;
+            }
+          }, function (val) {
+            update($node, $originalContent, props);
+          }));
+          index++;
+          if (index < length) {
+            if (typeof object[key].get === 'function') {
+              loop(object[key].get(), array, index);
+            } else {
+              loop(object[key], array, index);
+            }
+          }
+        }
+      }
+    })(props, ref.split('.'), 0);
+  });
+
+  function update($node, $originalContent, object) {
+    replace($node, $originalContent, object, function (variable, object) {
+      return variable.split('.').reduce(function (object, k) {
+        if (object && object[k]) {
+          if (typeof object[k].get === 'function') {
+            return object[k].get();
+          } else {
+            return object[k];
+          }
+        } else {
+          return '';
+        }
+      }, object);
+    });
+  }
+
+  function replace($node, $originalContent, object, cb) {
+    $node.textContent = $originalContent.replace(_utils2.default.mustacheRegex, function (match, variable) {
+      return cb(variable, object);
+    });
+  }
+
+  return props;
+};
+
+exports.default = _class;
 module.exports = exports['default'];
 
 /***/ })

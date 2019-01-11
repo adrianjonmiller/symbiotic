@@ -1,5 +1,9 @@
 export default class {
-  constructor (model) {
-    model.somethingX = 'this';
+  constructor (ctx) {
+    return {
+      pluginVar: function () {
+        return this
+      }
+    }
   }
 }
