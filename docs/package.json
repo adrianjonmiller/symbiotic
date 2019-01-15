@@ -1,0 +1,14 @@
+{
+  "name": "symbiotic-docs",
+  "version": "1.0.0",
+  "description": "Docs for symbiotic framework",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "thin.css": "1.0.1"
+  }
+}

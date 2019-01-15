@@ -138,7 +138,7 @@ export default {
       let attribute = '';
       let attributeValue = '';
 
-      switch (method.charAt(0)) {
+      switch (state.charAt(0)) {
         case '.':
           attribute = 'class';
           attributeValue = state.substring(1);
@@ -152,10 +152,10 @@ export default {
           attributeValue = state;
       }
 
-      if (vnom[attribute]) {
+      if (attribute in vnom) {
         if (vnom[attribute].split(' ').indexOf(attributeValue) > -1) {
           let obj = states[state];
-          vnom.setStates(states[state]);       
+          vnom.setStates(obj);       
         }
       }
     }
@@ -168,9 +168,7 @@ export default {
       this.init(vnom.next, states)
     }
 
-    if ('start' in vnom.state) {
-      vnom.state = 'start';
-    }
+    vnom.state = 'start';
   },
   getScope (el) {
     if (el === undefined) {

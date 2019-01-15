@@ -4,34 +4,11 @@ import TextNode from './textNode';
 import ResizeObserver from 'resize-observer-polyfill';
 import Descriptor from './descriptor';
 import Vtext from './vtext';
-import { ENETDOWN } from 'constants';
-
 
 export default class Vnode {
   constructor($node) {
-    const states = {};
     var stateName = null;
-
-    Vnode.prototype.setStates = function (newStates) {
-      if ('data' in newStates) {
-        this.extend(newStates.data);
-      }
-
-      if ('methods' in newStates) {
-        for (let methodKey in newStates.methods) {
-          this[methodKey] = newStates.methods[methodKey];
-        }
-      }
-
-      Object.assign(states, newStates)
-    }
-
-    Vnode.prototype.getState = function (state) {
-      if (state in states) {
-        return states[state]
-      }
-      return {}
-    }
+    this.states = {};
 
     Object.defineProperty(this, 'state', {
       get: () => {
@@ -69,7 +46,7 @@ export default class Vnode {
           newState.ready.apply(this)
         }
       }
-    })
+    });
 
     this.extend(new Vnom($node));
 
@@ -94,6 +71,29 @@ export default class Vnode {
         }
       }
     }));
+  }
+
+  setStates(newStates) {
+    if ('data' in newStates) {
+      this.extend(newStates.data);
+      delete newStates.data;
+    }
+
+    if ('methods' in newStates) {
+      for (let methodKey in newStates.methods) {
+        this[methodKey] = newStates.methods[methodKey];
+      }
+      delete newStates.methods;
+    }
+
+    this.states = newStates;
+  }
+
+  getState (state) {
+    if (state in this.states) {
+      return this.states[state]
+    }
+    return {}
   }
 
   $on(event) {
@@ -144,28 +144,22 @@ export default class Vnode {
     
     if ('on' in state) {
       let events = state.on;
+
       if (event in events) {
-        let fn = typeof events[event] === 'function' ? events[event] : function () { this.state = events[event] };
+        event = event.split('.');
+        let eventName = event[0];
+        let fn = events[eventName];
+
+        bubbles = event[1] !== 'stop';
+
+        fn = typeof fn === 'function' ? fn : function () { this.state = events[eventName] };
         fn.apply(this)
       }
     }
 
-    // if (this.events === undefined) {
-    //   this.events = {};
-    // }
-
-    // if (this.events[event]) {
-    //   for (let i = 0; i < this.events[event].length; i++) {
-    //     let e = this.events[event][i];
-
-    //     e.fn(payload);
-    //     bubbles = !e.bubbles ? e.bubbles : bubbles;
-    //   }
-    // }
-
-    // if (bubbles && this.parent) {
-    //   this.parent.emit(event, payload);
-    // }
+    if (bubbles && this.parent) {
+      this.parent.emit(eventName, payload)
+    }
   }
 
   extend (data) {
@@ -233,27 +227,6 @@ export default class Vnode {
     })(this.firstChild);
 
     return result;
-  }
-
-  on (event, fn) {
-    let eventName
-    var state = this.getState(this.state);
-
-
-
-    // event = event.split('.');
-    // var name = event[0];
-    // var bubbles = event[1] !== 'stop';
-
-    // if (this.events === undefined) {
-    //   this.events = {};
-    // }
-
-    // if (this.events[name] === undefined) {
-    //   this.events[name] = [];
-    // }
-
-    // this.events[name].push({ fn: fn, bubbles: bubbles });
   }
 
   plugins (Plugins) {

@@ -2,6 +2,7 @@ import Symbiote from '../src/index.js';
 import Button from './button.html';
 import Plugin from 'Plugins/test'
 import Plugin2 from './plugin';
+import 'thin.css';
 
 new Symbiote({
   states: {
@@ -27,13 +28,13 @@ new Symbiote({
           }
         },
         enter: function () {
-          console.log(this.func())
+          console.log(this)
         },
         ready: function () {
-          // console.log('ready')
+          console.log(this)
         },
         leave: function () {
-          // console.log('leave')
+          console.log(this)
         }
       },
       'loading': {
