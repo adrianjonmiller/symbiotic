@@ -1,27 +1,46 @@
 {
   "name": "symbiotic",
-  "version": "0.1.44",
-  "description": "Attaching functions to dom element",
-  "main": "dist/main.js",
+  "version": "1.0.0",
+  "description": "A lightweight DOM attachment framework",
+  "type": "module",
+  "private": false,
+  "keywords": ["dom", "framework", "lightweight", "attachment", "symbiote"],
+  "author": "Your Name",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/symbiotic.git"
+  },
   "scripts": {
-    "docs": "webpack --progress --colors --watch --mode development --config=webpack.docs.config.js",
-    "dev": "webpack --progress --colors --watch --mode development --config=webpack.development.config.js",
-    "build": "webpack --progress --colors --mode production --config=webpack.production.config.js",
-    "buildCompressed": "compress=true webpack --progress --colors --mode production --config=webpack.production.config.js"
+    "build": "rollup -c",
+    "build:watch": "rollup -c -w",
+    "dev": "npm run build:watch",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "prepublishOnly": "npm run build"
   },
   "devDependencies": {
-    "babel-core": "6.26.3",
-    "babel-loader": "^7.1.5",
-    "babel-plugin-add-module-exports": "^0.2.1",
-    "babel-preset-es2015": "^6.24.1",
-    "browser-sync": "2.24.6",
-    "browser-sync-webpack-plugin": "^2.2.2",
-    "compression-webpack-plugin": "^1.1.11",
-    "html-loader": "^0.5.5",
-    "path": "0.12.7",
-    "webpack": "^4.17.1",
-    "webpack-cli": "^3.1.0"
+    "vitest": "^1.0.0",
+    "jsdom": "^23.0.0",
+    "@testing-library/dom": "^9.0.0",
+    "@testing-library/user-event": "^14.0.0",
+    "@vitest/coverage-v8": "^1.0.0",
+    "rollup": "^4.0.0",
+    "@rollup/plugin-terser": "^0.4.0"
   },
-  "dependencies": {}
+  "main": "dist/symbiote.umd.js",
+  "module": "dist/symbiote.esm.js",
+  "exports": {
+    ".": {
+      "import": "./dist/symbiote.esm.js",
+      "require": "./dist/symbiote.umd.js",
+      "default": "./dist/symbiote.esm.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ]
 }

@@ -1,0 +1,12 @@
+{
+  "name": "docs",
+  "version": "1.0.0",
+  "description": "symbiotic docs",
+  "scripts": {
+    "build": "clovie build",
+    "dev": "clovie watch"
+  },
+  "devDependencies": {
+    "clovie": "^0.1.0"
+  }
+}
