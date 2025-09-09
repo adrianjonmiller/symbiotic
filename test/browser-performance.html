@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Symbiote Browser Performance Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .results {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .performance-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .metric {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .metric-label {
+            font-size: 14px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        .test-elements {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .test-element {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            text-align: center;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .test-element:hover {
+            background: #e9ecef;
+        }
+        .test-element.js-button {
+            background: #28a745;
+            color: white;
+        }
+        .test-element.js-modal {
+            background: #dc3545;
+            color: white;
+        }
+        .test-element.js-form {
+            background: #ffc107;
+            color: black;
+        }
+        .test-element.js-navigation {
+            background: #17a2b8;
+            color: white;
+        }
+        .test-element.js-card {
+            background: #6f42c1;
+            color: white;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Symbiote Browser Performance Test</h1>
+        
+        <div class="test-section">
+            <h2>Performance Metrics</h2>
+            <div class="performance-metrics">
+                <div class="metric">
+                    <div class="metric-value" id="initTime">-</div>
+                    <div class="metric-label">Initialization (ms)</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="attachTime">-</div>
+                    <div class="metric-label">Attachment (ms)</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="eventTime">-</div>
+                    <div class="metric-label">Event Handling (ms)</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="memoryUsage">-</div>
+                    <div class="metric-label">Memory (MB)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Test Controls</h2>
+            <button class="btn" id="runBasicTest">Run Basic Test</button>
+            <button class="btn" id="runStressTest">Run Stress Test</button>
+            <button class="btn" id="runMemoryTest">Run Memory Test</button>
+            <button class="btn" id="clearResults">Clear Results</button>
+        </div>
+
+        <div class="test-section">
+            <h2>Test Elements</h2>
+            <div class="test-elements" id="testElements">
+                <!-- Elements will be generated dynamically -->
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Test Results</h2>
+            <div id="results" class="results">Ready to run tests...</div>
+        </div>
+
+        <div class="test-section">
+            <h2>Status</h2>
+            <div id="status" class="status info">Initializing...</div>
+        </div>
+    </div>
+
+    <!-- Load Symbiote from the built files -->
+    <script src="symbiote.iife.js"></script>
+    <script>
+        // Verify Symbiote loaded
+        if (typeof Symbiote === 'undefined' || typeof Symbiote.createSymbiote === 'undefined') {
+            console.error('❌ Symbiote library failed to load!');
+            document.body.innerHTML = '<div style="padding: 20px; color: red; font-family: Arial;"><h1>❌ Error: Symbiote Library Not Found</h1><p>The Symbiote library could not be loaded. Please ensure:</p><ul><li>You have run <code>npm run build</code> to build the library</li><li>The file <code>test/symbiote.iife.js</code> exists</li></ul><p>Debug info: Symbiote = ' + typeof Symbiote + '</p></div>';
+        } else {
+            console.log('✅ Symbiote library loaded successfully!');
+            console.log('Available functions:', Object.keys(Symbiote));
+        }
+    </script>
+    
+    <script>
+        // Performance test suite
+        class SymbiotePerformanceTest {
+            constructor() {
+                this.symbiote = null;
+                this.results = [];
+                this.testElements = [];
+                this.eventCounts = {
+                    button: 0,
+                    modal: 0,
+                    form: 0,
+                    navigation: 0,
+                    card: 0
+                };
+                
+                this.initializeTest();
+            }
+
+            log(message, type = 'info') {
+                const timestamp = new Date().toLocaleTimeString();
+                const logMessage = `[${timestamp}] ${message}`;
+                this.results.push(logMessage);
+                
+                const resultsDiv = document.getElementById('results');
+                resultsDiv.textContent = this.results.join('\n');
+                resultsDiv.scrollTop = resultsDiv.scrollHeight;
+                
+                this.updateStatus(message, type);
+            }
+
+            updateStatus(message, type) {
+                const statusDiv = document.getElementById('status');
+                statusDiv.textContent = message;
+                statusDiv.className = `status ${type}`;
+            }
+
+            updateMetric(id, value) {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = value;
+                }
+            }
+
+            getMemoryUsage() {
+                if (performance.memory) {
+                    return Math.round(performance.memory.usedJSHeapSize / 1024 / 1024);
+                }
+                return 'N/A (Chrome only)';
+            }
+
+            getMemoryInfo() {
+                if (performance.memory) {
+                    return {
+                        used: Math.round(performance.memory.usedJSHeapSize / 1024 / 1024),
+                        total: Math.round(performance.memory.totalJSHeapSize / 1024 / 1024),
+                        limit: Math.round(performance.memory.jsHeapSizeLimit / 1024 / 1024)
+                    };
+                }
+                return null;
+            }
+
+            async initializeTest() {
+                try {
+                    this.log('Initializing Symbiote performance test...', 'info');
+                    
+                    // Create test elements
+                    this.createTestElements();
+                    
+                    // Initialize Symbiote
+                    const startTime = performance.now();
+                    this.symbiote = Symbiote.createSymbiote({
+                        '.js-button': (el) => {
+                            el.addEventListener('click', () => {
+                                this.eventCounts.button++;
+                                this.log(`Button clicked! Total: ${this.eventCounts.button}`);
+                            });
+                        },
+                        '.js-modal': (el) => {
+                            el.addEventListener('click', () => {
+                                this.eventCounts.modal++;
+                                this.log(`Modal clicked! Total: ${this.eventCounts.modal}`);
+                            });
+                        },
+                        '.js-form': (el) => {
+                            el.addEventListener('click', () => {
+                                this.eventCounts.form++;
+                                this.log(`Form clicked! Total: ${this.eventCounts.form}`);
+                            });
+                        },
+                        '.js-navigation': (el) => {
+                            el.addEventListener('click', () => {
+                                this.eventCounts.navigation++;
+                                this.log(`Navigation clicked! Total: ${this.eventCounts.navigation}`);
+                            });
+                        },
+                        '.js-card': (el) => {
+                            el.addEventListener('click', () => {
+                                this.eventCounts.card++;
+                                this.log(`Card clicked! Total: ${this.eventCounts.card}`);
+                            });
+                        }
+                    });
+                    
+                    const initTime = performance.now() - startTime;
+                    this.updateMetric('initTime', Math.round(initTime));
+                    this.log(`Symbiote initialized in ${Math.round(initTime)}ms`, 'success');
+                    
+                    // Attach to DOM
+                    const attachStart = performance.now();
+                    await this.symbiote.attach();
+                    const attachTime = performance.now() - attachStart;
+                    this.updateMetric('attachTime', Math.round(attachTime));
+                    this.log(`Attached to DOM in ${Math.round(attachTime)}ms`, 'success');
+                    
+                    this.updateMetric('memoryUsage', this.getMemoryUsage());
+                    this.log('Performance test ready!', 'success');
+                    
+                } catch (error) {
+                    this.log(`Error during initialization: ${error.message}`, 'error');
+                }
+            }
+
+            createTestElements() {
+                const container = document.getElementById('testElements');
+                const elementTypes = ['button', 'modal', 'form', 'navigation', 'card'];
+                
+                // Create 50 test elements
+                for (let i = 0; i < 50; i++) {
+                    const type = elementTypes[i % elementTypes.length];
+                    const element = document.createElement('div');
+                    element.className = `test-element js-${type}`;
+                    element.textContent = `${type} ${i + 1}`;
+                    element.dataset.index = i;
+                    container.appendChild(element);
+                    this.testElements.push(element);
+                }
+                
+                this.log(`Created ${this.testElements.length} test elements`, 'info');
+            }
+
+            async runBasicTest() {
+                this.log('Running basic performance test...', 'info');
+                
+                try {
+                    // Test event handling performance
+                    const startTime = performance.now();
+                    
+                    // Simulate rapid clicks on different elements
+                    for (let i = 0; i < 10; i++) {
+                        const randomElement = this.testElements[Math.floor(Math.random() * this.testElements.length)];
+                        randomElement.click();
+                    }
+                    
+                    const eventTime = performance.now() - startTime;
+                    this.updateMetric('eventTime', Math.round(eventTime));
+                    this.log(`Processed 10 events in ${Math.round(eventTime)}ms`, 'success');
+                    
+                    // Wait a bit for events to process
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    
+                    this.updateMetric('memoryUsage', this.getMemoryUsage());
+                    this.log('Basic test completed!', 'success');
+                    
+                } catch (error) {
+                    this.log(`Error during basic test: ${error.message}`, 'error');
+                }
+            }
+
+            async runStressTest() {
+                this.log('Running stress test...', 'info');
+                
+                try {
+                    const startTime = performance.now();
+                    const iterations = 100;
+                    
+                    // Rapid fire events
+                    for (let i = 0; i < iterations; i++) {
+                        const randomElement = this.testElements[Math.floor(Math.random() * this.testElements.length)];
+                        randomElement.click();
+                        
+                        // Add some dynamic elements
+                        if (i % 10 === 0) {
+                            const newElement = document.createElement('div');
+                            newElement.className = 'test-element js-button';
+                            newElement.textContent = `Dynamic ${i}`;
+                            document.getElementById('testElements').appendChild(newElement);
+                        }
+                    }
+                    
+                    const stressTime = performance.now() - startTime;
+                    this.log(`Stress test completed: ${iterations} events in ${Math.round(stressTime)}ms`, 'success');
+                    this.log(`Average time per event: ${Math.round(stressTime / iterations)}ms`, 'info');
+                    
+                    this.updateMetric('memoryUsage', this.getMemoryUsage());
+                    
+                } catch (error) {
+                    this.log(`Error during stress test: ${error.message}`, 'error');
+                }
+            }
+
+            async runMemoryTest() {
+                this.log('Running memory test...', 'info');
+                
+                try {
+                    const initialMemory = this.getMemoryUsage();
+                    this.log(`Initial memory usage: ${initialMemory}MB`, 'info');
+                    
+                    // Create and destroy many elements
+                    for (let i = 0; i < 5; i++) {
+                        const container = document.getElementById('testElements');
+                        
+                        // Add 100 elements
+                        for (let j = 0; j < 100; j++) {
+                            const element = document.createElement('div');
+                            element.className = 'test-element js-button';
+                            element.textContent = `Memory test ${i}-${j}`;
+                            container.appendChild(element);
+                        }
+                        
+                        // Wait a bit
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                        
+                        // Remove half of them
+                        const elements = container.querySelectorAll('.test-element');
+                        for (let k = 0; k < 50 && k < elements.length; k++) {
+                            elements[k].remove();
+                        }
+                        
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                    }
+                    
+                    const finalMemory = this.getMemoryUsage();
+                    this.log(`Final memory usage: ${finalMemory}MB`, 'info');
+                    this.log(`Memory difference: ${finalMemory - initialMemory}MB`, 'info');
+                    
+                    this.updateMetric('memoryUsage', finalMemory);
+                    
+                } catch (error) {
+                    this.log(`Error during memory test: ${error.message}`, 'error');
+                }
+            }
+
+            clearResults() {
+                this.results = [];
+                document.getElementById('results').textContent = 'Results cleared. Ready for new tests...';
+                this.updateStatus('Results cleared', 'info');
+                
+                // Reset metrics
+                this.updateMetric('initTime', '-');
+                this.updateMetric('attachTime', '-');
+                this.updateMetric('eventTime', '-');
+                this.updateMetric('memoryUsage', '-');
+                
+                // Reset event counts
+                this.eventCounts = {
+                    button: 0,
+                    modal: 0,
+                    form: 0,
+                    navigation: 0,
+                    card: 0
+                };
+            }
+        }
+
+        // Initialize the test when the page loads
+        let performanceTest;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            performanceTest = new SymbiotePerformanceTest();
+            
+            // Set up event listeners for buttons
+            document.getElementById('runBasicTest').addEventListener('click', () => {
+                performanceTest.runBasicTest();
+            });
+            
+            document.getElementById('runStressTest').addEventListener('click', () => {
+                performanceTest.runStressTest();
+            });
+            
+            document.getElementById('runMemoryTest').addEventListener('click', () => {
+                performanceTest.runMemoryTest();
+            });
+            
+            document.getElementById('clearResults').addEventListener('click', () => {
+                performanceTest.clearResults();
+            });
+        });
+    </script>
+</body>
+</html>

@@ -24,6 +24,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:browser": "npm run build && node scripts/update-test.js && open test/browser-performance.html",
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {

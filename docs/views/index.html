@@ -150,10 +150,10 @@ await symbiote.attach(root);
   <section id="api">
     <h2>API</h2>
 
-    <h3><code>createSymbiote(nodules)</code></h3>
+    <h3><code>createSymbiote(setupFunctions)</code></h3>
     <p>Create a Symbiote instance from a mapping of selectors to setup functions.</p>
     <ul>
-      <li><strong>nodules</strong> Object — keys are CSS selectors. Values are functions that receive the matching element and may optionally return a cleanup function.</li>
+      <li><strong>setupFunctions</strong> Object — keys are CSS selectors. Values are functions that receive the matching element and may optionally return a cleanup function.</li>
       <li><strong>returns</strong> Symbiote — the instance.</li>
     </ul>
 

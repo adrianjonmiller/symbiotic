@@ -48,7 +48,7 @@ await symbiote.attach();
 import { defineSetup } from 'symbiotic';
 
 // Create setup functions dynamically
-const setup = defineSetup('js-dynamic', (el) => {
+const node = defineSetup('js-dynamic', (el) => {
   el.addEventListener('click', () => console.log('Dynamic button clicked!'));
   // Return cleanup function (optional)
   return () => {
@@ -57,7 +57,7 @@ const setup = defineSetup('js-dynamic', (el) => {
 });
 
 // Remove the nodule later
-nodule.remove();
+node.remove();
 ```
 
 ### CommonJS
@@ -103,12 +103,12 @@ await symbiote.attach();
 
 ## API
 
-### `createSymbiote(nodules)`
+### `createSymbiote(setupFunctions)`
 
 Creates a new Symbiote instance.
 
 **Parameters:**
-- `nodules` (Object): An object mapping CSS class names to functions
+- `setupFunctions` (Object): An object mapping CSS class names to functions
 
 **Returns:**
 - `Symbiote`: A Symbiote instance
