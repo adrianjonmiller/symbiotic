@@ -1,6 +1,6 @@
 # Symbiote
 
-A lightweight, high-performance DOM attachment framework that automatically attaches JavaScript behaviors to HTML elements based on CSS selectors. Symbiote makes your HTML "smart" without writing repetitive JavaScript.
+A lightweight, high-performance not-a-framework JavaScript library that makes it easy to attach javascript to your DOM.
 
 ## 🚀 Features
 
