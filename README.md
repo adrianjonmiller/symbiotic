@@ -86,8 +86,8 @@ Symbiote includes a powerful template rendering system:
 ```html
 <template class="js-user-card">
   <div class="card">
-    <h3>{{name}}</h3>
-    <p>{{email}}</p>
+    <h3>John Doe</h3>
+    <p>john@example.com</p>
     <button class="js-edit">Edit</button>
   </div>
 </template>
@@ -98,11 +98,16 @@ Symbiote includes a powerful template rendering system:
 ```javascript
 const symbiote = createSymbiote({
   '.js-user-card': (renderFn, batch) => {
-    // renderFn renders the template content after the template element
-    renderFn(); // Uses template.innerHTML as content source
-    
-    // You can also pass custom content
-    renderFn('<div class="custom-content">Hello World!</div>');
+    // renderFn renders the template element's content after the template
+    // and passes setup functions for the newly rendered elements
+    renderFn((el) => {
+      // This setup function runs on each newly rendered element
+      // el is the rendered element (not the template)
+      el.style.border = '1px solid #ccc';
+      el.addEventListener('click', () => {
+        console.log('User card clicked!');
+      });
+    }); // Uses template.innerHTML as content source
   },
   
   '.js-edit': (el) => {
@@ -113,15 +118,49 @@ const symbiote = createSymbiote({
 });
 ```
 
+### How Template Rendering Works
+
+1. **Template Element**: Contains the content to be rendered
+2. **renderFn(setupFunction)**: Renders the template's content after the template element
+3. **Content Source**: Uses `template.content`
+4. **Setup Function**: The function passed to `renderFn` runs on each newly rendered element
+5. **Element Parameter**: The setup function receives the rendered element (not the template)
+
 ### Dynamic Template Updates
 
 ```javascript
-// Update template content and re-render
+// Update the template element's content
 const template = document.querySelector('.js-user-card');
-template.innerHTML = '<div class="card"><h3>Updated Name</h3></div>';
+template.innerHTML = '<div class="card"><h3>Jane Smith</h3><p>jane@example.com</p></div>';
 
-// Re-render with new content
-renderFn(); // Now renders the updated content
+// Re-render with updated template content and new setup function
+renderFn((el) => {
+  // This runs on the newly rendered element
+  el.classList.add('updated');
+  el.addEventListener('click', () => {
+    console.log('Updated user card clicked!');
+  });
+}); // Now renders the updated template.innerHTML
+```
+
+### Result After renderFn()
+
+```html
+<!-- Original template element (unchanged) -->
+<template class="js-user-card">
+  <div class="card">
+    <h3>John Doe</h3>
+    <p>john@example.com</p>
+    <button class="js-edit">Edit</button>
+  </div>
+</template>
+
+<!-- Rendered content appears after the template -->
+<div class="card">
+  <h3>John Doe</h3>
+  <p>john@example.com</p>
+  <button class="js-edit">Edit</button>
+</div>
 ```
 
 ## 🌐 Global Behaviors
