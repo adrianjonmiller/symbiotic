@@ -14,8 +14,6 @@ import {
 } from './utils/elementState.js';
 import { 
   setupFunctions, 
-  defineSetup, 
-  registerSymbioteInstance, 
   unregisterSymbioteInstance 
 } from './utils/globalRegistry.js';
 
