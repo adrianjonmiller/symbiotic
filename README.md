@@ -126,43 +126,6 @@ const symbiote = createSymbiote({
 4. **Setup Function**: The function passed to `renderFn` runs on each newly rendered element
 5. **Element Parameter**: The setup function receives the rendered element (not the template)
 
-### Dynamic Template Updates
-
-```javascript
-// Update the template element's content
-const template = document.querySelector('.js-user-card');
-template.innerHTML = '<div class="card"><h3>Jane Smith</h3><p>jane@example.com</p></div>';
-
-// Re-render with updated template content and new setup function
-renderFn((el) => {
-  // This runs on the newly rendered element
-  el.classList.add('updated');
-  el.addEventListener('click', () => {
-    console.log('Updated user card clicked!');
-  });
-}); // Now renders the updated template.innerHTML
-```
-
-### Result After renderFn()
-
-```html
-<!-- Original template element (unchanged) -->
-<template class="js-user-card">
-  <div class="card">
-    <h3>John Doe</h3>
-    <p>john@example.com</p>
-    <button class="js-edit">Edit</button>
-  </div>
-</template>
-
-<!-- Rendered content appears after the template -->
-<div class="card">
-  <h3>John Doe</h3>
-  <p>john@example.com</p>
-  <button class="js-edit">Edit</button>
-</div>
-```
-
 ## 🌐 Global Behaviors
 
 Define reusable behaviors that work across your entire application:
