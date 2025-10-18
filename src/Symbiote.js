@@ -7,24 +7,30 @@ import {
 import { 
   getAttachedSet, 
   getCleanupMap, 
-  addDirectCleanup, 
   runDirectCleanups,
   attachedBySelector,
   cleanupBySelector
 } from './utils/elementState.js';
 import { 
   setupFunctions, 
+  registerSymbioteInstance,
   unregisterSymbioteInstance 
 } from './utils/globalRegistry.js';
 
 // ---------- Symbiote ----------
 export class Symbiote {
   #mutationObserver = null;
-  #changeQueue = new Set();
-  #flushScheduled = false;
   #root = null;
+  #stateManager = null;
 
-  constructor(functions = {}) {
+  static create(functions = {}, stateManager = null) {
+    const symbiote = new Symbiote(functions, stateManager);
+    registerSymbioteInstance(symbiote);
+    return symbiote;
+  }
+
+  constructor(functions = {}, stateManager = null) {
+    this.#stateManager = stateManager;
     // Register selectors as-is
     if (functions && typeof functions === 'object') {
       for (const [selector, setup] of Object.entries(functions)) {
@@ -65,9 +71,14 @@ export class Symbiote {
     this.#walk(root);
   }
 
-  batch(operations) {
-    if (typeof operations === 'function') return this.#addToChangeQueue(operations);
-    return Promise.resolve();
+  use() {
+    if (functions && typeof functions === 'object') {
+      for (const [selector, setup] of Object.entries(functions)) {
+        if (!isStableSelector(selector)) continue;
+        setupFunctions.set(selector, setup);
+        indexSelector(selector);
+      }
+    }
   }
 
   update() {
@@ -171,10 +182,7 @@ export class Symbiote {
     const attached = getAttachedSet(el);
     if (attached.has(selector)) return;
 
-    const args =
-      el.tagName === 'TEMPLATE'
-        ? [this.#createRenderFunction(el), this.#createBatchFunction()]
-        : [el, this.#createBatchFunction()];
+    const args = [el, this.#stateManager];
 
     try {
       const cleanup = setupFunction(...args);
@@ -228,66 +236,8 @@ export class Symbiote {
       while ((n = walker.nextNode())) this.#detachAllForElement(n);
     }
   }
+}
 
-  #createBatchFunction() {
-    return (operations) => this.batch(operations);
-  }
-
-  #createRenderFunction(template) {
-    let currentRenderedNodes = [];
-
-    const detachRenderedTree = () => {
-      for (const n of currentRenderedNodes) {
-        this.#detachTree(n);
-        if (n.parentNode) n.parentNode.removeChild(n);
-      }
-      currentRenderedNodes = [];
-    };
-
-    return (childSetupFunction) => {
-      detachRenderedTree();
-
-      const clonedContent = document.importNode(template.content, true);
-      currentRenderedNodes = Array.from(clonedContent.children);
-      template.after(clonedContent);
-
-      if (typeof childSetupFunction === 'function') {
-        for (const node of currentRenderedNodes) {
-          if (node.nodeType !== 1) continue; // HTMLElement
-          try {
-            const cleanup = childSetupFunction(node, this.#createBatchFunction());
-            if (typeof cleanup === 'function') addDirectCleanup(node, cleanup);
-          } catch (e) {
-            console.error('Error in template child setup:', e);
-          }
-        }
-      }
-    };
-  }
-
-  #addToChangeQueue(operations) {
-    return new Promise((resolve, reject) => {
-      this.#changeQueue.add({ operations, resolve, reject });
-      this.#scheduleFlush();
-    });
-  }
-
-  #scheduleFlush() {
-    if (this.#flushScheduled) return;
-    this.#flushScheduled = true;
-
-    const scheduleCallback =
-      typeof requestAnimationFrame !== 'undefined'
-        ? requestAnimationFrame
-        : (cb) => setTimeout(cb, 0);
-
-    scheduleCallback(() => {
-      this.#changeQueue.forEach(change => {
-        try { change.operations(); change.resolve(); }
-        catch (error) { change.reject(error); }
-      });
-      this.#flushScheduled = false;
-      this.#changeQueue.clear();
-    });
-  }
+export function createSymbiote(modules, stateManager) {
+  return Symbiote.create(modules, stateManager);
 }

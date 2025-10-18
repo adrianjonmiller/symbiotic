@@ -9,7 +9,7 @@
 import './basic-functionality.test.js';
 import './edge-cases.test.js';
 import './mutation-observer.test.js';
-import './template-rendering.test.js';
 import './definesetup.test.js';
 import './css-selectors.test.js';
 import './symbiote.test.js';
+import './simple-binding.test.js';

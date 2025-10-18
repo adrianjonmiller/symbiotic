@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { createSymbiote } from '../src/createSymbiote.js';
+import { createSymbiote } from '../src/main.js';
 import { defineSetup } from '../src/utils/globalRegistry.js';
 
 // Polyfill requestAnimationFrame for testing
