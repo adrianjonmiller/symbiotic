@@ -51,20 +51,37 @@ export function parseExpression(expression, scope) {
   return fn;
 }
 
-function createExpressionFunction(expression, scope) {
+function createExpressionFunction(expression, scope, keys = {$item: '$item', $key: '$key', $index: '$index', $scope: '$scope'}) {
   if (scope && Object.keys(scope).length > 0) {
     const scopeKeys = Object.keys(scope);
+    // Filter out fixed scope variables to avoid conflicts
+    const filteredScopeKeys = scopeKeys.filter(key => !['$item', '$key', '$index'].includes(key));
     const fnCode = 
-      'try {\n' +
-      '  // Make all scope properties available as local variables\n' +
-      '  const { ' + scopeKeys.join(', ') + ' } = $scope || {};\n' +
-      '  return (' + expression + ');\n' +
-      '} catch (error) {\n' +
-      '  console.error("Error evaluating expression: ' + expression.replace(/"/g, '\\"') + '", error);\n' +
-      '  return null;\n' +
-      '}';
-    return new Function('$scope', fnCode);
+      `try {\n` +
+      `  // Make all scope properties available as local variables\n` +
+      `  const { ${filteredScopeKeys.join(', ')} } = ${keys.$scope} || {};\n` +
+      `  // Make fixed scope variables available\n` +
+      `  const ${keys.$item} = ${keys.$scope}.${keys.$item} || null;\n` +
+      `  const ${keys.$key} = ${keys.$scope}.${keys.$key} || null;\n` +
+      `  const ${keys.$index} = ${keys.$scope}.${keys.$index} || null;\n` +
+      `  return (${expression});\n` +
+      `} catch (error) {\n` +
+      `  console.error("Error evaluating expression: ${expression.replace(/"/g, '\\"')}", error);\n` +
+      `  return null;\n` +
+      `}`;
+    return new Function(keys.$scope, fnCode);
   } else {
-    return new Function('$scope', 'return (' + expression + ');');
+    const fnCode = 
+      `try {\n` +
+      `  // Make fixed scope variables available\n` +
+      `  const ${keys.$item} = ${keys.$scope}.${keys.$item} || null;\n` +
+      `  const ${keys.$key} = ${keys.$scope}.${keys.$key} || null;\n` +
+      `  const ${keys.$index} = ${keys.$scope}.${keys.$index} || null;\n` +
+      `  return (${expression});\n` +
+      `} catch (error) {\n` +
+      `  console.error("Error evaluating expression: ${expression.replace(/"/g, '\\"')}", error);\n` +
+      `  return null;\n` +
+      `}`;
+    return new Function(keys.$scope, fnCode);
   }
 }

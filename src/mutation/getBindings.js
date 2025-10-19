@@ -1,6 +1,36 @@
 import { createTextInterpolation } from './parseTextInterpolation.js';
 import { parseExpression } from './parseExpression.js';
 
+/**
+ * Bind text nodes that contain interpolation syntax
+ * @param {Element} element - The element to process
+ * @param {Object} scope - The scope object
+ * @param {Array} bindings - The bindings array to add to
+ */
+function bindTextNodes(element, scope, bindings) {
+  const walker = document.createTreeWalker(
+    element,
+    NodeFilter.SHOW_TEXT,
+    null,
+    false
+  );
+  
+  let node;
+  while ((node = walker.nextNode())) {
+    const text = node.textContent; // Don't trim - preserve original spacing
+    if (text && text.includes('{{') && text.includes('}}')) {
+      // Create text interpolation function for this text node
+      const dataFn = createTextInterpolation(text, scope);
+      
+      bindings.push({
+        property: 'textnode',
+        dataFn,
+        node, // Store reference to the text node
+      });
+    }
+  }
+}
+
 
 export function getBindings(element, scope) {
   const bindings = [];
@@ -37,6 +67,9 @@ export function getBindings(element, scope) {
         property: 'textcontent',
         dataFn,
       });
+    } else {
+      // For mixed content, bind individual text nodes
+      bindTextNodes(element, scope, bindings);
     }
   }
   

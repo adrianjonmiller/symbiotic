@@ -1,53 +1,116 @@
 import { parseExpression } from './parseExpression.js';
 import { addToChangeQueue } from './changeQueue.js';
-import { parseRepeat } from './repeatUtils.js';
 import { getBindings } from './getBindings.js';
 import { createMutator } from './createMutator.js';
+import { createGetter } from './createGetter.js';
 
-
-function getRepeatData(repeatInfo, scope) {
-  const { collection, operator } = repeatInfo;
-  
-  // Get the raw collection data
-  let collectionData;
-  if (collection.includes('.')) {
-    const collectionFn = parseExpression(collection, scope);
-    collectionData = collectionFn(scope) || [];
-  } else {
-    collectionData = scope[collection] || [];
-  }
-  
-  // Handle different operators
-  if (operator === 'in') {
-    // For 'in', iterate over keys/indices
-    if (Array.isArray(collectionData)) {
-      return collectionData.map((_, index) => index);
-    } else if (typeof collectionData === 'object' && collectionData !== null) {
-      return Object.keys(collectionData);
-    }
-    return [];
-  } else {
-    // For 'of', iterate over values (default behavior)
-    return collectionData;
-  }
+/**
+ * Check if element is a template
+ */
+export function isTemplate(element) {
+  return element && element.tagName && element.tagName.toLowerCase() === 'template';
 }
 
 /**
- * Get the actual value when using 'in' operator
+ * Parse repeat attribute to extract iteration details
+ * @param {HTMLElement} element - The element with data-repeat attribute
+ * @returns {Object|null} - Parsed repeat configuration or null if not a repeat element
  */
-function getActualValue(scope, collection, key) {
-  // Get the raw collection data
-  let collectionData;
-  if (collection.includes('.')) {
-    const collectionFn = parseExpression(collection, scope);
-    collectionData = collectionFn(scope) || [];
-  } else {
-    collectionData = scope[collection] || [];
+export function parseRepeat(element) {
+  if (!isTemplate(element)) return null;
+  
+  const repeatAttr = element.getAttribute('data-repeat');
+  if (!repeatAttr) return null;
+  
+  // Parse different syntaxes:
+  // "item of items" -> iterate over values (like for...of)
+  // "index in items" -> iterate over keys/indices (like for...in)
+  // "(key, item) of items" -> destructured with both key and value
+  // "(index, item) in items" -> destructured with index and value
+  
+  // Check for destructured syntax: (key, item) of/in collection
+  const destructuredMatch = repeatAttr.match(/^\((\w+),\s*(\w+)\)\s+(of|in)\s+(.+)$/);
+  if (destructuredMatch) {
+    const [, keyVar, itemVar, operator, collection] = destructuredMatch;
+    return {
+      itemVar: itemVar,           // 'item'
+      keyVar: keyVar,             // 'key' or 'index'
+      collection: collection,      // 'items' or '$scope.items'
+      keyPath: keyVar,            // 'key' or 'index'
+      operator: 'of'              // Always use 'of' for consistency
+    };
   }
   
-  // Return the value at the key/index
-  return collectionData[key];
+  // Check for single variable syntax: item of/in collection
+  const singleMatch = repeatAttr.match(/^(\w+)\s+(of|in)\s+(.+)$/);
+  if (singleMatch) {
+    const [, variable, operator, collection] = singleMatch;
+    return {
+      itemVar: variable,          // 'item' or 'index'
+      collection: collection,      // 'items' or '$scope.items'
+      keyPath: 'index',           // Use index-based keying for single variable syntax
+      operator: 'of'              // Always use 'of' for consistency
+    };
+  }
+  
+  // Check for simple data reference: data or data.property or $scope.data
+  const simpleMatch = repeatAttr.match(/^([\w.$]+)$/);
+  if (simpleMatch) {
+    const [, collection] = simpleMatch;
+    return {
+      itemVar: 'item',           // Default to 'item'
+      collection: collection,     // The data reference (e.g., 'items' or '$scope.items')
+      keyPath: 'index',          // Default to index-based keying
+      operator: 'of'             // Default to 'of' operator
+    };
+  }
+  
+  return null;
 }
+
+/**
+ * Check if element has repeat attributes
+ */
+export function hasRepeat(element) {
+  return parseRepeat(element) !== null;
+}
+
+/**
+ * Parse repeat attributes and convert to repeat config
+ * @param {HTMLElement} element - The element with data-repeat attribute
+ * @param {Object} data - The data object
+ * @param {Object} inject - The inject object
+ * @returns {Object|null} - The repeat config or null if not a repeat element
+ */
+export function createRepeatConfig(element, data, inject = {}) {
+  // First check if element is a template
+  if (!isTemplate(element)) return null;
+  
+  // Then check if it has repeat attributes
+  if (!hasRepeat(element)) return null;
+  
+  const repeatInfo = parseRepeat(element);
+  if (!repeatInfo) return null;
+  
+  // Handle $scope syntax by stripping the prefix
+  let collectionPath = repeatInfo.collection;
+  if (collectionPath.startsWith('$scope.')) {
+    collectionPath = collectionPath.substring(7); // Remove '$scope.' prefix
+  }
+  
+  // Use createGetter for dot syntax support
+  const getData = createGetter(collectionPath);
+  
+  // Convert repeat info to config format
+  return {
+    data: getData(data) || [],
+    key: repeatInfo.keyPath === 'index' ? null : repeatInfo.keyPath,
+    itemKey: repeatInfo.itemVar,
+    inject: inject
+  };
+}
+
+
 
 function walkTemplate(templateContent, callback) {
   // Handle DocumentFragment by recursively walking through all elements
@@ -79,22 +142,6 @@ function walkTemplate(templateContent, callback) {
   }
 }
 
-/**
- * Extract key from item using keyPath
- */
-function getKeyFromItem(item, keyPath, itemVar, keyVar = null, key = null, scope = {}) {
-  // For destructured syntax, we have both key and item
-  if (keyVar && key !== null) {
-    const itemScope = { ...scope, [keyVar]: key, [itemVar]: item };
-    const keyFn = parseExpression(keyPath, itemScope);
-    return keyFn(itemScope);
-  }
-  
-  // For single variable syntax, use item as key or evaluate keyPath
-  const itemScope = { ...scope, [itemVar]: item };
-  const keyFn = parseExpression(keyPath, itemScope);
-  return keyFn(itemScope);
-}
 
 /**
  * Local binding function to avoid circular dependency
@@ -105,7 +152,9 @@ function bindElement(element, data) {
   
   for (const binding of bindings) {
     const initialValue = binding.dataFn(data);
-    const mutator = createMutator(element, binding.property, initialValue);
+    // For text node bindings, use the text node itself, otherwise use the element
+    const targetElement = binding.property === 'textnode' ? binding.node : element;
+    const mutator = createMutator(targetElement, binding.property, initialValue);
     mutators.push(mutator);
   }
   
@@ -141,61 +190,34 @@ function createRepeatItem(template, itemScope) {
   return { fragment, elements, updateFn };
 }
 
-export function repeat(element, data, inject = {}) {
+export function repeat(elementOrSelector, config, onMount) {
+  const { template, data, inject = {}, parent = null, after = null, keyGetter = null, itemKey = 'item', keyKey = 'key' } = normalizeConfig(elementOrSelector, config);
   
-  const createScope = (data) => ({ ...data, ...inject });
-  const repeatInfo = parseRepeat(element);
-  const scope = createScope(data);
-  const repeatData = getRepeatData(repeatInfo, scope);
   const repeated = new Map();
-  const parent = element.parentNode;
-  let insertAfter = element;
-
-  console.log('repeatData', repeatData);
+  let insertAfter = after || template;
+  let length = data.length;
 
   // Initial render - create all elements
-  for (let i = 0; i < repeatData.length; i++) {
-    const item = repeatData[i];
-    const key = repeatInfo.keyVar ? i : item; // For destructured syntax, use index as key
-    
-    // Create item scope based on operator
-    let itemScope;
-    if (repeatInfo.operator === 'in') {
-      if (repeatInfo.keyVar) {
-        // Destructured syntax: (key, item) in collection
-        // key gets the key/index, item gets the actual value
-        const actualValue = getActualValue(scope, repeatInfo.collection, item);
-        itemScope = { 
-          ...scope,  // Include all original scope variables (like 'items')
-          [repeatInfo.itemVar]: actualValue,  // itemVar gets the actual value
-          [repeatInfo.keyVar]: item  // keyVar gets the key/index
-        };
-      } else {
-        // Single variable syntax: item in collection
-        // item gets the key/index
-        itemScope = { 
-          ...scope,  // Include all original scope variables (like 'items')
-          [repeatInfo.itemVar]: item  // itemVar gets the key/index
-        };
-      }
-    } else {
-      // For 'of', the item is the value
-      itemScope = { 
-        ...scope,  // Include all original scope variables
-        [repeatInfo.itemVar]: item,
-        ...(repeatInfo.keyVar ? { [repeatInfo.keyVar]: key } : {})
-      };
+  for (let i = 0; i < length; i++) {
+    const [key, item] = data[i];
+    const itemScope = {
+      data: data,
+      [itemKey]: item,
+      index: i,
+      $item: item,
+      $key: keyGetter ? keyGetter(item) : key,
+      $index: i,
+      ...inject,
     }
-    
-    const uniqueKey = getKeyFromItem(item, repeatInfo.keyPath, repeatInfo.itemVar, repeatInfo.keyVar, key, itemScope);
-    const { fragment, elements, updateFn } = createRepeatItem(element, itemScope);
-
-    repeated.set(uniqueKey, { elements, updateFn });
+    itemScope.key = keyGetter ? keyGetter(item) : key;
+    const { fragment, elements, updateFn } = createRepeatItem(template, itemScope);
+    repeated.set(itemScope.key, { elements, updateFn });
     
     // Capture current insertAfter value for the closure
     const currentInsertAfter = insertAfter;
     addToChangeQueue(() => {
       parent.insertBefore(fragment, currentInsertAfter.nextSibling);
+      onMount?.(fragment, itemScope);
     });
     
     // Update insertAfter synchronously for next iteration
@@ -205,16 +227,15 @@ export function repeat(element, data, inject = {}) {
   }
 
   return function update(newData) {
-    const newScope = createScope(newData);
-    const newRepeatData = getRepeatData(repeatInfo, newScope);
+    // Normalize new data to the same format as initial render
+    const normalizedNewData = normalizeData(newData, keyGetter);
     const newKeys = new Set();
     const newKeyOrder = [];
     
     // Build new key set and order
-    for (let i = 0; i < newRepeatData.length; i++) {
-      const item = newRepeatData[i];
-      const key = repeatInfo.keyVar ? i : item;
-      const uniqueKey = getKeyFromItem(item, repeatInfo.keyPath, repeatInfo.itemVar, repeatInfo.keyVar, key);
+    for (let i = 0; i < normalizedNewData.length; i++) {
+      const [key, item] = normalizedNewData[i];
+      const uniqueKey = keyGetter ? keyGetter(item) : key;
       newKeys.add(uniqueKey);
       newKeyOrder.push(uniqueKey);
     }
@@ -235,41 +256,20 @@ export function repeat(element, data, inject = {}) {
     }
 
     // Phase 2: Process new data array in order
-    let currentInsertAfter = element;
+    let currentInsertAfter = template;
     
-    for (let i = 0; i < newRepeatData.length; i++) {
-      const item = newRepeatData[i];
-      const key = repeatInfo.keyVar ? i : item;
-      const uniqueKey = getKeyFromItem(item, repeatInfo.keyPath, repeatInfo.itemVar, repeatInfo.keyVar, key);
-      
-      // Create item scope based on operator
-      let itemScope;
-      if (repeatInfo.operator === 'in') {
-        if (repeatInfo.keyVar) {
-          // Destructured syntax: (key, item) in collection
-          // key gets the key/index, item gets the actual value
-          const actualValue = getActualValue(newScope, repeatInfo.collection, item);
-          itemScope = { 
-            ...newScope,  // Include all original scope variables (like 'items')
-            [repeatInfo.itemVar]: actualValue,  // itemVar gets the actual value
-            [repeatInfo.keyVar]: item  // keyVar gets the key/index
-          };
-        } else {
-          // Single variable syntax: item in collection
-          // item gets the key/index
-          itemScope = { 
-            ...newScope,  // Include all original scope variables (like 'items')
-            [repeatInfo.itemVar]: item  // itemVar gets the key/index
-          };
-        }
-      } else {
-        // For 'of', the item is the value
-        itemScope = { 
-          ...newScope,  // Include all original scope variables
-          [repeatInfo.itemVar]: item,
-          ...(repeatInfo.keyVar ? { [repeatInfo.keyVar]: key } : {})
-        };
-      }
+    for (let i = 0; i < normalizedNewData.length; i++) {
+      const [key, item] = normalizedNewData[i];
+      const itemScope = {
+        data: normalizedNewData,
+        [itemKey]: item,
+        index: i,
+        $item: item,
+        $key: keyGetter ? keyGetter(item) : key,
+        $index: i,
+        ...inject,
+      };
+      const uniqueKey = keyGetter ? keyGetter(item) : key;
       
       if (repeated.has(uniqueKey)) {
         // Element exists - check if it needs to be moved
@@ -277,7 +277,7 @@ export function repeat(element, data, inject = {}) {
         
         // Check if first element is in correct position
         const firstElement = existingElements[0];
-        const shouldBeAfter = i === 0 ? element : currentInsertAfter;
+        const shouldBeAfter = i === 0 ? template : currentInsertAfter;
         const actualPrevious = firstElement ? firstElement.previousSibling : null;
         
         if (firstElement && actualPrevious !== shouldBeAfter) {
@@ -300,13 +300,14 @@ export function repeat(element, data, inject = {}) {
         
       } else {
         // New element - create and insert
-        const { fragment, elements, updateFn } = createRepeatItem(element, itemScope);
+        const { fragment, elements, updateFn } = createRepeatItem(template, itemScope);
 
         repeated.set(uniqueKey, { elements, updateFn });
         
         const capturedInsertAfter = currentInsertAfter;
         addToChangeQueue(() => {
           parent.insertBefore(fragment, capturedInsertAfter.nextSibling);
+          onMount?.(fragment, itemScope);
         });
         
         currentInsertAfter = elements[elements.length - 1];
@@ -315,29 +316,77 @@ export function repeat(element, data, inject = {}) {
   };
 }
 
-/**
- * Create repeat bindings for template element
- */
-export function createRepeatBindings(element, repeatInfo) {
-  // Get the template content as a document fragment
-  const templateContent = element.content.cloneNode(true);
+
+function getTemplate(template) {
+  if (typeof template === 'string') {
+    if (template.startsWith('.') || template.startsWith('#')) {
+      return document.querySelector(template);
+    } else {
+      const element = document.createElement('template');
+      element.content.innerHTML = template;
+      return element;
+    }
+  }
+  return template;
+}
+
+function resolveElement(elementOrSelector, fallback) {
+  if (!elementOrSelector) return fallback;
+  if (elementOrSelector instanceof HTMLElement) return elementOrSelector;
+  if (typeof elementOrSelector === 'string') {
+    const found = document.querySelector(elementOrSelector);
+    return found || fallback;
+  }
+  return fallback;
+}
+
+function normalizeConfig(template, config) {
+  let { data, parent, after, key, itemKey, keyKey } = config;
+  template = getTemplate(template);
+  parent = resolveElement(parent, template.parentNode);
+  after = resolveElement(after, template);
+  itemKey = itemKey || 'item';
+  keyKey = keyKey || 'key';
   
-  // Store template info
+  const keyGetter = key ? createGetter(key) : null;
+  data = normalizeData(data, keyGetter);
+  
+  // Validate parent/after relationship
+  if (parent && after) {
+    after = resolveElement(after, template);
+    parent = resolveElement(parent, template.parentNode);
+  }
+  
   return {
-    type: 'repeat',
-    element,                    // The <template> element
-    templateContent,           // Cloned template content
-    itemVar: repeatInfo.itemVar,
-    collection: repeatInfo.collection,
-    keyPath: repeatInfo.keyPath
-  };  
+    template,
+    parent,
+    after,
+    data,
+    key,
+    itemKey,
+    keyKey,
+    keyGetter: keyGetter
+  };
 }
 
-
-
-/**
- * Get repeat info from element
- */
-export function getRepeatInfo(element) {
-  return parseRepeat(element);
+function normalizeData(data, keyGetter = null) {
+  // Normalize data to entries format
+  if (Array.isArray(data)) {
+    // For arrays: use keyGetter if available, otherwise use index
+    if (keyGetter) {
+      return data.map((item, index) => {
+        const key = keyGetter(item);
+        return [key, item];
+      });
+    } else {
+      return data.map((item, index) => [index, item]);
+    }
+  } else if (data && typeof data === 'object') {
+    // For objects: [['key1', value1], ['key2', value2]]
+    return Object.entries(data);
+  } else {
+    // Handle other cases (null, undefined, etc.)
+    return [];
+  }
 }
+

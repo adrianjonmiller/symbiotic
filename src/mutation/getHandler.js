@@ -95,6 +95,11 @@ export const getHandler = (property) => {
           el.removeAttribute('maxlength');
         }
       };
+    case 'textnode':
+      return (el, value) => {
+        // For text node bindings, el is actually the text node
+        el.textContent = value != null ? String(value) : '';
+      };
     default:
       return (el, value) => {
         el[normalizedProperty] = value != null ? String(value) : '';

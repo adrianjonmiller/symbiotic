@@ -1,6 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { bind, bindAll } from '../src/mutation/bind.js';
 
+function waitRender() {
+  return new Promise(resolve => requestAnimationFrame(() => resolve()));
+}
+
 describe('Text Interpolation', () => {
   let container;
 
@@ -88,12 +92,12 @@ describe('Text Interpolation', () => {
     expect(element.textContent.trim()).toBe('Status: Online (42 users)');
   });
 
-  it('should work with nested elements', () => {
+  it('should work with nested elements', async () => {
     container.innerHTML = `
       <div>
-        <h1>{{ title }}</h1>
-        <p>By {{ author.name }}</p>
-        <span>{{ date.toLocaleDateString() }}</span>
+        <h1>{{ $scope.title }}</h1>
+        <p>By {{ $scope.author.name }}</p>
+        <span>{{ $scope.date.toLocaleDateString() }}</span>
       </div>
     `;
     
@@ -102,6 +106,8 @@ describe('Text Interpolation', () => {
       author: { name: 'John Doe' },
       date: new Date(2023, 0, 1) // January 1, 2023
     });
+    
+    await waitRender();
     
     expect(container.querySelector('h1').textContent.trim()).toBe('My Article');
     expect(container.querySelector('p').textContent.trim()).toBe('By John Doe');
@@ -124,13 +130,15 @@ describe('Text Interpolation', () => {
     expect(element.textContent.trim()).toBe('Hello Alice!');
   });
 
-  it('should work alongside data-bind attributes', () => {
+  it('should work alongside data-bind attributes', async () => {
     container.innerHTML = '<div data-bind:class="statusClass">Status: {{ status }}</div>';
     
     const update = bindAll(container, {
       status: 'Active',
       statusClass: 'active'
     });
+    
+    await waitRender();
     
     const child = container.querySelector('div');
     expect(child.textContent.trim()).toBe('Status: Active');

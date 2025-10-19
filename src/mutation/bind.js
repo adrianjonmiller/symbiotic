@@ -1,7 +1,7 @@
 import { getBindings } from './getBindings.js';
 import { createMutator } from './createMutator.js';
-import { hasRepeat } from './repeatUtils.js';
-import { repeat } from './repeat.js';
+import { hasRepeat, isTemplate, createRepeatConfig, repeat } from './repeat.js';
+
 
 /**
  * bind(element, data)
@@ -14,12 +14,24 @@ import { repeat } from './repeat.js';
  * @param {Object} inject - The inject object to inject into the scope
  */
 export function bind(element, data, inject = {}) {
+  
   // Check if this is a repeat template - if so, delegate to repeat function
-  if (hasRepeat(element)) {
-    return repeat(element, data, inject);
+  if (isTemplate(element) && hasRepeat(element)) {
+    const config = createRepeatConfig(element, data, inject); 
+    if (config) {
+      const repeatUpdateFn = repeat(element, config);
+      
+      // Return a wrapper function that extracts the correct data
+      return function update(newData) {
+        const newConfig = createRepeatConfig(element, newData, inject);
+        if (newConfig) {
+          repeatUpdateFn(newConfig.data);
+        }
+      };
+    }
   }
   
-  // Traverse the tree and collect all bindings
+  // Regular element binding
   const createScope = (data) => ({ ...data, ...inject }); 
   const bindings = getBindings(element, createScope(data));
   const scope = createScope(data);
@@ -55,6 +67,20 @@ export function bindAll(element, data, inject = {}) {
   
   // Recursively collect bindings from all descendants
   function collectBindings(el) {
+    // Check if this is a repeat template
+    const repeatConfig = createRepeatConfig(el, data, inject);
+    if (repeatConfig) {
+      // Handle repeat template - this will create its own update function
+      const repeatUpdateFn = repeat(el, repeatConfig);
+      allBindings.push({
+        element: el,
+        mutator: repeatUpdateFn,
+        dataFn: () => data // Repeat handles its own data
+      });
+      return; // Don't process children of repeat templates
+    }
+    
+    // Regular element - get its bindings
     const bindings = getBindings(el, scope);
     for (const binding of bindings) {
       binding.element = el;
@@ -71,7 +97,9 @@ export function bindAll(element, data, inject = {}) {
   
   for (const binding of allBindings) {
     const initialValue = binding.dataFn(scope);
-    binding.mutator = createMutator(binding.element, binding.property, initialValue);
+    // Use binding.node if it exists (for text nodes), otherwise use binding.element
+    const target = binding.node || binding.element;
+    binding.mutator = createMutator(target, binding.property, initialValue);
   }
   
   // Return update function
