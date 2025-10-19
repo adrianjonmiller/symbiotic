@@ -7,7 +7,6 @@
  */
 
 import { addToChangeQueue } from './mutation/changeQueue.js';
-import { specialHandlers } from './mutation/getHandler.js';
 
 export function destroy(el) {
   if (!el) return;

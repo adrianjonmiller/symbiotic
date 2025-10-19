@@ -1,7 +1,8 @@
 import { parseExpression } from './parseExpression.js';
-import { collectBindings } from './bind.js';
 import { addToChangeQueue } from './changeQueue.js';
-import { bind } from './bind.js';
+import { parseRepeat } from './repeatUtils.js';
+import { getBindings } from './getBindings.js';
+import { createMutator } from './createMutator.js';
 
 /**
  * Check if element is a template
@@ -10,49 +11,6 @@ function isTemplate(element) {
   return element && element.tagName && element.tagName.toLowerCase() === 'template';
 }
 
-/**
- * Parse repeat attributes from template element
- */
-function parseRepeat(element) {
-  if (!isTemplate(element)) return null;
-  
-  const repeatAttr = element.getAttribute('data-repeat');
-  
-  if (!repeatAttr) return null;
-  
-  // Parse different syntaxes:
-  // "item of items" -> iterate over values (like for...of)
-  // "index in items" -> iterate over keys/indices (like for...in)
-  // "(key, item) of items" -> destructured with both key and value
-  // "(index, item) in items" -> destructured with index and value
-  
-  // Check for destructured syntax: (key, item) of/in collection
-  const destructuredMatch = repeatAttr.match(/^\((\w+),\s*(\w+)\)\s+(of|in)\s+(.+)$/);
-  if (destructuredMatch) {
-    const [, keyVar, itemVar, operator, collection] = destructuredMatch;
-    return {
-      itemVar: itemVar,           // 'item'
-      keyVar: keyVar,             // 'key' or 'index'
-      collection: collection,      // 'items' or 'Object.keys(users)'
-      keyPath: keyVar,            // 'key' or 'index'
-      operator: operator          // 'of' or 'in'
-    };
-  }
-  
-  // Check for single variable syntax: item of/in collection
-  const singleMatch = repeatAttr.match(/^(\w+)\s+(of|in)\s+(.+)$/);
-  if (singleMatch) {
-    const [, variable, operator, collection] = singleMatch;
-    return {
-      itemVar: variable,          // 'item' or 'index'
-      collection: collection,      // 'items' or 'Object.keys(users)'
-      keyPath: variable,          // 'item' or 'index'
-      operator: operator          // 'of' or 'in'
-    };
-  }
-  
-  return null;
-}
 
 function getRepeatData(repeatInfo, scope) {
   const { collection, operator } = repeatInfo;
@@ -146,6 +104,28 @@ function getKeyFromItem(item, keyPath, itemVar, keyVar = null, key = null, scope
 }
 
 /**
+ * Local binding function to avoid circular dependency
+ */
+function bindElement(element, data) {
+  const bindings = getBindings(element, data);
+  const mutators = [];
+  
+  for (const binding of bindings) {
+    const initialValue = binding.dataFn(data);
+    const mutator = createMutator(element, binding.property, initialValue);
+    mutators.push(mutator);
+  }
+  
+  return function update(newData) {
+    for (const binding of bindings) {
+      const newValue = binding.dataFn(newData);
+      const mutator = mutators[bindings.indexOf(binding)];
+      mutator(newValue);
+    }
+  };
+}
+
+/**
  * Create a repeat item element with bindings
  */
 function createRepeatItem(template, itemScope) {
@@ -156,7 +136,7 @@ function createRepeatItem(template, itemScope) {
   
   const updateFns = new Set();
   walkTemplate(fragment, (child) => {
-    updateFns.add(bind(child, itemScope));
+    updateFns.add(bindElement(child, itemScope));
   });
 
   const updateFn = (newItemScope) => {
@@ -358,12 +338,6 @@ export function createRepeatBindings(element, repeatInfo) {
 }
 
 
-/**
- * Check if element has repeat attributes
- */
-export function hasRepeat(element) {
-  return parseRepeat(element) !== null;
-}
 
 /**
  * Get repeat info from element

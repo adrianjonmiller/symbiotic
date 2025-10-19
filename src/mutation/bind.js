@@ -1,7 +1,6 @@
 import { getBindings } from './getBindings.js';
 import { createMutator } from './createMutator.js';
-import { getHandler } from './getHandler.js';
-import { hasRepeat } from './repeat.js';
+import { hasRepeat } from './repeatUtils.js';
 import { repeat } from './repeat.js';
 
 /**
