@@ -26,8 +26,9 @@
     <p>A lightweight DOM attachment framework that automatically attaches behavior to elements based on CSS selectors.</p>
   </header>
 
-  <template class="js-repeat" data-for="item of items" data-key="item.id">
-    <div class="item" data-bind:textcontent="item.name">
+  <template class="js-repeat" data-repeat="item of items" data-key="item.id">
+    <div class="item">
+      <span data-bind:textcontent="item.name"></span>
       <span data-bind:textcontent="item.description"></span>
       <span data-bind:textcontent="item.price"></span>
       <span data-bind:textcontent="item.category"></span>

@@ -4,13 +4,6 @@ import { parseRepeat } from './repeatUtils.js';
 import { getBindings } from './getBindings.js';
 import { createMutator } from './createMutator.js';
 
-/**
- * Check if element is a template
- */
-function isTemplate(element) {
-  return element && element.tagName && element.tagName.toLowerCase() === 'template';
-}
-
 
 function getRepeatData(repeatInfo, scope) {
   const { collection, operator } = repeatInfo;
@@ -149,13 +142,16 @@ function createRepeatItem(template, itemScope) {
 }
 
 export function repeat(element, data, inject = {}) {
-  const repeatInfo = parseRepeat(element);
+  
   const createScope = (data) => ({ ...data, ...inject });
+  const repeatInfo = parseRepeat(element);
   const scope = createScope(data);
   const repeatData = getRepeatData(repeatInfo, scope);
   const repeated = new Map();
   const parent = element.parentNode;
   let insertAfter = element;
+
+  console.log('repeatData', repeatData);
 
   // Initial render - create all elements
   for (let i = 0; i < repeatData.length; i++) {
