@@ -5,6 +5,19 @@
   <title>Symbiote — Lightweight DOM attachment framework</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="description" content="Symbiote automatically attaches behavior to DOM elements based on CSS selectors. No dependencies. Tiny. Works with static and dynamic content." />
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .item { 
+      border: 1px solid #ccc; 
+      margin: 5px; 
+      padding: 10px; 
+      display: inline-block; 
+      width: 200px; 
+      vertical-align: top;
+    }
+    .item span { display: block; margin: 2px 0; }
+    header { margin-bottom: 20px; }
+  </style>
 </head>
 <body>
 
@@ -13,295 +26,16 @@
     <p>A lightweight DOM attachment framework that automatically attaches behavior to elements based on CSS selectors.</p>
   </header>
 
-  <nav>
-    <ul>
-      <li><a href="#why">Why Symbiote</a></li>
-      <li><a href="#install">Installation</a></li>
-      <li><a href="#quickstart">Quick start</a></li>
-      <li><a href="#usage">Usage patterns</a></li>
-      <li><a href="#api">API</a></li>
-      <li><a href="#examples">Examples</a></li>
-      <li><a href="#how-it-works">How it works</a></li>
-      <li><a href="#faq">FAQ</a></li>
-      <li><a href="#license">License</a></li>
-    </ul>
-  </nav>
+  <template class="js-repeat" data-for="item of items" data-key="item.id">
+    <div class="item" data-bind:textcontent="item.name">
+      <span data-bind:textcontent="item.description"></span>
+      <span data-bind:textcontent="item.price"></span>
+      <span data-bind:textcontent="item.category"></span>
+      <span data-bind:textcontent="item.inStock ? 'In Stock' : 'Out of Stock'"></span>
+      <span data-bind:textcontent="item.rating"></span>
+    </div>
+  </template>
 
-  <section id="why">
-    <h2>Why Symbiote</h2>
-    <p>Symbiote is a tiny utility that binds behaviors to DOM elements using plain CSS selectors. You describe what elements you care about and provide a function that wires them up. Symbiote finds those elements, runs your function, and keeps watching the page for new matches that appear later.</p>
-    <ul>
-      <li><strong>Automatic DOM ready</strong> — waits for the DOM when needed and then attaches.</li>
-      <li><strong>Efficient scanning</strong> — a TreeWalker touches each element once.</li>
-      <li><strong>Dynamic content</strong> — a MutationObserver applies behaviors to nodes added later.</li>
-      <li><strong>Composable</strong> — the same element can match multiple selectors and gets all behaviors.</li>
-      <li><strong>Cleanup</strong> — your nodule can return a cleanup function that runs when unregistered.</li>
-      <li><strong>No dependencies</strong> — pure JavaScript, ~1 KB minified.</li>
-    </ul>
-  </section>
-
-  <section id="install">
-    <h2>Installation</h2>
-    <pre><code>npm install symbiotic</code></pre>
-  </section>
-
-  <section id="quickstart">
-    <h2>Quick start</h2>
-    <p>Map CSS selectors to setup functions. Call <code>attach()</code> once and Symbiote does the rest.</p>
-<pre><code class="language-js">import createSymbiote from 'symbiotic';
-
-const symbiote = createSymbiote({
-  '.js-button': (el) =&gt; {
-    const onClick = () =&gt; console.log('Button clicked!');
-    el.addEventListener('click', onClick);
-    return () =&gt; el.removeEventListener('click', onClick);
-  },
-  '.js-modal': (el) =&gt; {
-    const onClick = () =&gt; { el.style.display = 'none'; };
-    el.addEventListener('click', onClick);
-    return () =&gt; el.removeEventListener('click', onClick);
-  }
-});
-
-// Automatically waits for DOM to be ready when targeting document.body
-await symbiote.attach();
-</code></pre>
-  </section>
-
-  <section id="usage">
-    <h2>Usage patterns</h2>
-
-    <h3>ES Modules default export</h3>
-<pre><code class="language-js">import createSymbiote from 'symbiotic';
-
-const symbiote = createSymbiote({
-  '.js-button': (el) =&gt; {
-    const onClick = () =&gt; console.log('Button clicked!');
-    el.addEventListener('click', onClick);
-    return () =&gt; el.removeEventListener('click', onClick);
-  }
-});
-
-await symbiote.attach();
-</code></pre>
-
-    <h3>Named imports</h3>
-<pre><code class="language-js">import { createSymbiote, defineSetup } from 'symbiotic';
-
-const symbiote = createSymbiote({
-  '.js-button': (el) =&gt; {
-    const onClick = () =&gt; console.log('Button clicked!');
-    el.addEventListener('click', onClick);
-    return () =&gt; el.removeEventListener('click', onClick);
-  }
-});
-
-await symbiote.attach();
-
-// Add another behavior later
-const modalNodule = defineSetup('.js-modal', (el) =&gt; {
-  const onClick = () =&gt; { el.style.display = 'none'; };
-  el.addEventListener('click', onClick);
-  return () =&gt; el.removeEventListener('click', onClick);
-});
-
-// Remove it when you no longer want it
-// modalNodule.remove();
-</code></pre>
-
-    <h3>CommonJS</h3>
-<pre><code class="language-js">const { createSymbiote } = require('symbiotic');
-
-const symbiote = createSymbiote({
-  '.js-button': (el) =&gt; {
-    const onClick = () =&gt; console.log('Button clicked!');
-    el.addEventListener('click', onClick);
-    return () =&gt; el.removeEventListener('click', onClick);
-  }
-});
-
-symbiote.attach();
-</code></pre>
-
-    <h3>Direct script tag</h3>
-<pre><code class="language-html">&lt;script src="https://unpkg.com/symbiotic/dist/symbiote.iife.min.js"&gt;&lt;/script&gt;
-&lt;script&gt;
-  const symbiote = Symbiote.createSymbiote({
-    '.js-button': (el) =&gt; {
-      const onClick = () =&gt; console.log('Button clicked!');
-      el.addEventListener('click', onClick);
-      return () =&gt; el.removeEventListener('click', onClick);
-    }
-  });
-
-  symbiote.attach().then(() =&gt; {
-    console.log('Symbiote attached!');
-  });
-&lt;/script&gt;
-</code></pre>
-
-    <h3>Attach to a subtree</h3>
-    <p>You can scope attachment to a specific container.</p>
-<pre><code class="language-js">const root = document.querySelector('#sidebar');
-await symbiote.attach(root);
-</code></pre>
-  </section>
-
-  <section id="api">
-    <h2>API</h2>
-
-    <h3><code>createSymbiote(setupFunctions)</code></h3>
-    <p>Create a Symbiote instance from a mapping of selectors to setup functions.</p>
-    <ul>
-      <li><strong>setupFunctions</strong> Object — keys are CSS selectors. Values are functions that receive the matching element and may optionally return a cleanup function.</li>
-      <li><strong>returns</strong> Symbiote — the instance.</li>
-    </ul>
-
-    <h3><code>symbiote.attach(root?)</code></h3>
-    <p>Attach behaviors to the DOM. If <code>root</code> is omitted, it defaults to <code>document.body</code> and waits for DOM ready.</p>
-    <ul>
-      <li><strong>root</strong> HTMLElement optional — container to scan and observe.</li>
-      <li><strong>returns</strong> Promise&lt;void&gt; — resolves after the initial scan.</li>
-    </ul>
-
-    <h3><code>defineSetup(selector, noduleFunction)</code></h3>
-    <p>Register a behavior globally after an instance already exists. Matches are applied immediately across all instances, including elements already in the DOM.</p>
-    <ul>
-      <li><strong>selector</strong> string — a CSS selector like <code>.js-button</code>.</li>
-      <li><strong>noduleFunction</strong> function — runs for each match. May return a cleanup function.</li>
-      <li><strong>returns</strong> { remove() } — calling <code>remove</code> unregisters the behavior and runs cleanup on all matched elements.</li>
-    </ul>
-
-    <h3>Cleanup contract</h3>
-    <p>If your setup function returns a function, Symbiote stores it and calls it when the nodule is removed. Use this to remove event listeners or teardown observers.</p>
-  </section>
-
-  <section id="examples">
-    <h2>Examples</h2>
-
-    <h3>Counter</h3>
-<pre><code class="language-js">import createSymbiote from 'symbiotic';
-
-const symbiote = createSymbiote({
-  '.js-counter': (el) =&gt; {
-    let count = 0;
-    const onClick = () =&gt; {
-      count += 1;
-      el.textContent = `Clicked ${count} times`;
-    };
-    el.addEventListener('click', onClick);
-    return () =&gt; el.removeEventListener('click', onClick);
-  }
-});
-
-await symbiote.attach();
-</code></pre>
-
-    <h3>Modal open and close</h3>
-<pre><code class="language-js">const symbiote = createSymbiote({
-  '.js-modal-trigger': (el) =&gt; {
-    const onClick = () =&gt; {
-      const modal = document.querySelector('.js-modal');
-      if (modal) modal.style.display = 'block';
-    };
-    el.addEventListener('click', onClick);
-    return () =&gt; el.removeEventListener('click', onClick);
-  },
-  '.js-modal-close': (el) =&gt; {
-    const onClick = () =&gt; {
-      const modal = el.closest('.js-modal');
-      if (modal) modal.style.display = 'none';
-    };
-    el.addEventListener('click', onClick);
-    return () =&gt; el.removeEventListener('click', onClick);
-  }
-});
-
-await symbiote.attach();
-</code></pre>
-
-    <h3>Form validation</h3>
-<pre><code class="language-js">const symbiote = createSymbiote({
-  '.js-validate': (el) =&gt; {
-    const onBlur = () =&gt; {
-      if (!el.value) el.classList.add('error');
-      else el.classList.remove('error');
-    };
-    el.addEventListener('blur', onBlur);
-    return () =&gt; el.removeEventListener('blur', onBlur);
-  }
-});
-
-await symbiote.attach();
-</code></pre>
-
-    <h3>Functional composition with <code>defineSetup</code></h3>
-<pre><code class="language-js">import { defineSetup } from 'symbiotic';
-
-const createButtonNodule = (message) =&gt; {
-  return defineSetup('.js-button', (el) =&gt; {
-    const handler = () =&gt; console.log(message);
-    el.addEventListener('click', handler);
-    return () =&gt; el.removeEventListener('click', handler);
-  });
-};
-
-const createModalNodule = () =&gt; {
-  return defineSetup('.js-modal', (el) =&gt; {
-    const handler = () =&gt; { el.style.display = 'none'; };
-    el.addEventListener('click', handler);
-    return () =&gt; el.removeEventListener('click', handler);
-  });
-};
-
-// Use them
-const buttonNodule = createButtonNodule('Button clicked!');
-const modalNodule = createModalNodule();
-
-// Later
-// buttonNodule.remove();
-// modalNodule.remove();
-</code></pre>
-  </section>
-
-  <section id="how-it-works">
-    <h2>How it works</h2>
-    <ol>
-      <li><strong>Registration</strong> — you map selectors to setup functions. Symbiote stores them in a global registry so multiple instances share the same behaviors.</li>
-      <li><strong>Initial scan</strong> — a TreeWalker scans the target root and calls your setup function for each matching element. If your setup returns a function, Symbiote keeps it so it can clean up later.</li>
-      <li><strong>Observation</strong> — a MutationObserver watches for new elements or class attribute changes. New or changed nodes are checked against the registry and wired up when they match.</li>
-      <li><strong>Cleanup</strong> — removing a nodule runs the stored cleanup for each matched element and stops tracking those elements for that selector.</li>
-    </ol>
-    <p>Elements can match multiple selectors. Each setup function runs independently, which makes behaviors easy to compose.</p>
-  </section>
-
-  <section id="faq">
-    <h2>FAQ</h2>
-
-    <h3>Does Symbiote work with any framework</h3>
-    <p>Yes. It works with anything that renders HTML. It is a small DOM utility, not a component system.</p>
-
-    <h3>What happens if I register a selector twice</h3>
-    <p>Registering a new nodule for the same selector first cleans up the old one on all matched elements, then applies the new one. This prevents leaks.</p>
-
-    <h3>Can I attach multiple Symbiote instances</h3>
-    <p>Yes. Instances share the same global nodule registry. Each instance observes its own root and applies the same behaviors inside that scope.</p>
-
-    <h3>What about performance</h3>
-    <p>The initial pass uses a TreeWalker that visits elements once. After that, a MutationObserver checks only changed nodes. Keep your setup functions small and return a cleanup function if you add listeners or observers.</p>
-
-    <h3>Do I need to wait for DOM ready</h3>
-    <p>If you call <code>attach()</code> with no root, Symbiote waits for the DOM before scanning <code>document.body</code>. If you pass a container you manage, it attaches immediately.</p>
-  </section>
-
-  <section id="license">
-    <h2>License</h2>
-    <p>MIT</p>
-  </section>
-
-  <footer>
-    <p>© Symbiote</p>
-  </footer>
-
+  <script src="/main.js"></script>
 </body>
 </html>

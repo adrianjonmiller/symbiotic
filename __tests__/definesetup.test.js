@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { createSymbiote } from '../src/main.js';
+import { createSymbiote, batch } from '../src/main.js';
 import { defineSetup } from '../src/utils/globalRegistry.js';
 
 // Polyfill requestAnimationFrame for testing
@@ -199,7 +199,7 @@ describe('defineSetup Functionality', () => {
 
     let batchFunction;
     const symbiote = createSymbiote({
-      '.js-batch': (el, batch) => {
+      '.js-batch': (el) => {
         batchFunction = batch;
       }
     });
@@ -219,7 +219,7 @@ describe('defineSetup Functionality', () => {
 
     let batchFunction;
     const symbiote = createSymbiote({
-      '.js-batch-promise': (el, batch) => {
+      '.js-batch-promise': (el) => {
         batchFunction = batch;
       }
     });
@@ -243,7 +243,7 @@ describe('defineSetup Functionality', () => {
 
     let batchFunction;
     const symbiote = createSymbiote({
-      '.js-batch-async': (el, batch) => {
+      '.js-batch-async': (el) => {
         batchFunction = batch;
       }
     });

@@ -10,6 +10,7 @@ export default defineConfig({
       reporter: ['text', 'json', 'html'],
       include: ['src/**/*.js'],
       exclude: ['src/**/*.test.js', 'src/**/__tests__/**']
-    }
+    },
+    watch: false
   }
 });

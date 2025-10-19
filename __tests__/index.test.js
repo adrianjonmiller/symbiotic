@@ -12,4 +12,3 @@ import './mutation-observer.test.js';
 import './definesetup.test.js';
 import './css-selectors.test.js';
 import './symbiote.test.js';
-import './simple-binding.test.js';
