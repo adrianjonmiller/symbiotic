@@ -63,6 +63,13 @@ describe('Mutation System', () => {
       await new Promise(resolve => requestAnimationFrame(resolve));
       expect(element.style.cssText).toBe('color: red; font-weight: bold;');
     });
+
+    it('add data attribute to element', async () => {
+      const element = document.createElement('div');
+      const mutator = createMutator(element, 'data-test', 'test');
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      expect(element.getAttribute('data-test')).toBe('test');
+    });
   });
 
   describe('parseExpression', () => {

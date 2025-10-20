@@ -102,7 +102,10 @@ export const getHandler = (property) => {
       };
     default:
       return (el, value) => {
-        el[normalizedProperty] = value != null ? String(value) : '';
+        if (normalizedProperty.startsWith('data-')) {
+          return el.setAttribute(normalizedProperty, value != null ? String(value) : '');
+        }
+        return el[normalizedProperty] = value != null ? String(value) : '';
       };
   };
 };

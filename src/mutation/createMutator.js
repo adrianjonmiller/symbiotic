@@ -1,4 +1,5 @@
 import { addToChangeQueue } from './changeQueue.js';
+import { getHandler } from './getHandler.js';
 
 /**
  * Updates an element's property or attribute with special handling
@@ -8,7 +9,7 @@ import { addToChangeQueue } from './changeQueue.js';
  * @param {Function} [transform] - Optional transform function
  * @param {Function} [specialHandler] - Optional special handler function
  */
-import { getHandler } from './getHandler.js';
+
 export function createMutator(el, name, initial, transform) {
   if (!(el instanceof Element) && !(el instanceof Text)) return () => {};
 
@@ -27,6 +28,9 @@ export function createMutator(el, name, initial, transform) {
   if (initial !== undefined) {
     // Apply initial value synchronously
     last = transform ? transform(initial, el[name] || (el.getAttribute ? el.getAttribute(name) : undefined)) : initial;
+    if (name === 'data-test') {
+      console.log(handler, name, last, initial);
+    }
     handler(el, last);
   }
   return apply
